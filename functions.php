@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISTICK_STATIC_VERSION', '1.4.6');
+define('IRISTICK_STATIC_VERSION', '1.4.9');
 define('IRISTICK_STATIC_DIR', get_template_directory());
 define('IRISTICK_STATIC_URI', get_template_directory_uri());
 define('IRISTICK_EUR_TO_VND_RATE', 35000);
@@ -21,6 +21,8 @@ function iristick_static_setup() {
     add_theme_support('post-thumbnails');
     add_theme_support('html5', array('style', 'script', 'gallery', 'caption'));
     add_theme_support('woocommerce');
+    add_theme_support('editor-styles');
+    add_editor_style('assets/css/editor-blog.css');
 }
 add_action('after_setup_theme', 'iristick_static_setup');
 
@@ -525,6 +527,122 @@ function iristick_migrate_product_prices_to_vnd() {
     update_option('iristick_prices_stored_as_vnd_v1', current_time('mysql'), false);
 }
 add_action('init', 'iristick_migrate_product_prices_to_vnd', 27);
+
+function iristick_import_static_blog_posts() {
+    if (get_option('iristick_blog_posts_imported_v1')) {
+        return;
+    }
+
+    $news_root = iristick_static_page_root() . '/blog/news';
+    if (!is_dir($news_root)) {
+        return;
+    }
+    $category = term_exists('tin-tuc', 'category');
+    if (!$category) {
+        $category = wp_insert_term('Tin tức', 'category', array('slug' => 'tin-tuc'));
+    }
+    $category_id = is_array($category) ? (int) $category['term_id'] : (int) $category;
+
+    foreach (glob($news_root . '/*/page.php') as $file) {
+        $slug = basename(dirname($file));
+        if (get_page_by_path($slug, OBJECT, 'post')) {
+            continue;
+        }
+        $html = file_get_contents($file);
+        if (!preg_match('#<h1\b[^>]*>(.*?)</h1>#is', $html, $title_match)) {
+            continue;
+        }
+        $title = html_entity_decode(wp_strip_all_tags($title_match[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $excerpt = '';
+        if (preg_match('#<p\b[^>]*class="[^"]*intro[^"]*"[^>]*>(.*?)</p>#is', $html, $excerpt_match)) {
+            $excerpt = trim(wp_strip_all_tags($excerpt_match[1]));
+        }
+        $content = '';
+        if (preg_match_all('#<div class="block">(.*?)</div>#is', $html, $blocks)) {
+            foreach ($blocks[1] as $block) {
+                $block = preg_replace('#<!--.*?-->#s', '', $block);
+                $block = preg_replace('#<span\b[^>]*class=["\'][^"\']*bold[^"\']*["\'][^>]*>(.*?)</span>#is', '<strong>$1</strong>', $block);
+                $content .= '<p>' . trim($block) . '</p>';
+            }
+        }
+        if ($content === '') {
+            $content = '<p>' . ($excerpt ?: 'N/A') . '</p>';
+        }
+        $image_url = '';
+        $before_title = substr($html, 0, strpos($html, $title_match[0]));
+        if (preg_match_all('#<img\b[^>]*src=["\']([^"\']+)["\'][^>]*>#i', $before_title, $images) && !empty($images[1])) {
+            $image_url = iristick_static_rewrite_url(end($images[1]), $file);
+        }
+        $post_date = current_time('mysql');
+        if (preg_match('/(\d{1,2})\s+Tháng\s+(\d{1,2})\s+năm\s+(\d{4})/u', $html, $date_match)) {
+            $post_date = sprintf('%04d-%02d-%02d 09:00:00', $date_match[3], $date_match[2], $date_match[1]);
+        }
+        $post_id = wp_insert_post(array(
+            'post_type' => 'post', 'post_status' => 'publish', 'post_name' => $slug,
+            'post_title' => $title, 'post_excerpt' => $excerpt, 'post_content' => wp_kses_post($content),
+            'post_date' => $post_date, 'post_category' => $category_id ? array($category_id) : array(),
+        ));
+        if (!is_wp_error($post_id) && $image_url) {
+            update_post_meta($post_id, '_iristick_blog_image_url', esc_url_raw($image_url));
+        }
+    }
+    update_option('iristick_blog_posts_imported_v1', current_time('mysql'), false);
+}
+add_action('init', 'iristick_import_static_blog_posts', 30);
+
+// Keep blog editing simple: classic title/content editor with a large featured
+// image panel above the content, matching the requested editorial workflow.
+add_filter('use_block_editor_for_post_type', function ($use_block_editor, $post_type) {
+    return $post_type === 'post' ? false : $use_block_editor;
+}, 20, 2);
+add_filter('use_block_editor_for_post', function ($use_block_editor, $post) {
+    return $post instanceof WP_Post && $post->post_type === 'post' ? false : $use_block_editor;
+}, 20, 2);
+
+add_action('add_meta_boxes_post', function () {
+    remove_meta_box('postimagediv', 'post', 'side');
+    add_meta_box('postimagediv', 'Ảnh đại diện', 'post_thumbnail_meta_box', 'post', 'normal', 'high');
+});
+
+function iristick_import_blog_featured_images() {
+    if (get_option('iristick_blog_featured_images_v1')) {
+        return;
+    }
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+
+    $posts = get_posts(array('post_type' => 'post', 'post_status' => 'any', 'numberposts' => -1, 'category_name' => 'tin-tuc'));
+    foreach ($posts as $post) {
+        if (has_post_thumbnail($post)) {
+            continue;
+        }
+        $image_url = get_post_meta($post->ID, '_iristick_blog_image_url', true);
+        $marker = '/wp-content/themes/iristick-static-theme/static/';
+        $position = strpos($image_url, $marker);
+        if (!$image_url || $position === false) {
+            continue;
+        }
+        $relative = rawurldecode(substr($image_url, $position + strlen($marker)));
+        $source = IRISTICK_STATIC_DIR . '/static/' . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+        if (!is_file($source)) {
+            continue;
+        }
+        $temp = wp_tempnam(basename($source));
+        if (!$temp || !copy($source, $temp)) {
+            continue;
+        }
+        $file_array = array('name' => sanitize_file_name(basename($source)), 'tmp_name' => $temp);
+        $attachment_id = media_handle_sideload($file_array, $post->ID, $post->post_title);
+        if (is_wp_error($attachment_id)) {
+            @unlink($temp);
+            continue;
+        }
+        set_post_thumbnail($post->ID, $attachment_id);
+    }
+    update_option('iristick_blog_featured_images_v1', current_time('mysql'), false);
+}
+add_action('init', 'iristick_import_blog_featured_images', 31);
 
 // Direct checkout always purchases one unit, so no quantity selector is shown.
 add_filter('woocommerce_is_sold_individually', '__return_true', 10, 2);
@@ -1359,6 +1477,69 @@ function iristick_static_short_page_title($path, $original = '') {
     return isset($titles[$path]) ? $titles[$path] : $original;
 }
 
+function iristick_convert_static_euro_prices($html) {
+    $html = preg_replace_callback('/€\s*([0-9][0-9.,]*)/u', function ($matches) {
+        $raw = rtrim($matches[1], '.,');
+        if (preg_match('/^([0-9.]+),([0-9]{2})$/', $raw, $parts)) {
+            $euros = (float) str_replace('.', '', $parts[1]) + ((int) $parts[2] / 100);
+        } elseif (preg_match('/^([0-9,]+)\.([0-9]{2})$/', $raw, $parts)) {
+            $euros = (float) str_replace(',', '', $parts[1]) + ((int) $parts[2] / 100);
+        } else {
+            $euros = (float) preg_replace('/[^0-9]/', '', $raw);
+        }
+        return number_format($euros * IRISTICK_EUR_TO_VND_RATE, 0, ',', '.') . '&nbsp;₫';
+    }, $html);
+
+    return strtr($html, array(
+        'Tất cả giá đều nằm ở EUR' => 'Tất cả giá đều tính bằng VND',
+        'Thay vì 2.575.00' => 'thay vì 90.125.000 ₫',
+        'tiết kiệm 75,00' => 'tiết kiệm 2.625.000 ₫',
+        'Lưu $75,00' => 'Tiết kiệm 2.625.000 ₫',
+    ));
+}
+
+function iristick_blog_database_content($request_path) {
+    $is_index = $request_path === 'blog/news';
+    $slug = $is_index ? '' : basename($request_path);
+    if (!$is_index && strpos($request_path, 'blog/news/') !== 0) {
+        return '';
+    }
+
+    if ($is_index) {
+        $posts = get_posts(array('post_type' => 'post', 'post_status' => 'publish', 'numberposts' => -1, 'category_name' => 'tin-tuc', 'orderby' => 'date', 'order' => 'DESC'));
+        $cards = '';
+        foreach ($posts as $post) {
+            $image = get_the_post_thumbnail_url($post, 'large') ?: get_post_meta($post->ID, '_iristick_blog_image_url', true);
+            $excerpt = $post->post_excerpt ?: wp_trim_words(wp_strip_all_tags($post->post_content), 24, '…');
+            $cards .= '<article class="iristick-news-card">'
+                . ($image ? '<a href="' . esc_url(home_url('/blog/news/' . $post->post_name . '/')) . '"><img src="' . esc_url($image) . '" alt="' . esc_attr($post->post_title) . '"></a>' : '')
+                . '<div><time>' . esc_html(get_the_date('d/m/Y', $post)) . '</time><h2><a href="' . esc_url(home_url('/blog/news/' . $post->post_name . '/')) . '">' . esc_html($post->post_title) . '</a></h2>'
+                . '<p>' . esc_html($excerpt) . '</p><a class="iristick-news-more" href="' . esc_url(home_url('/blog/news/' . $post->post_name . '/')) . '">Đọc bài viết</a></div></article>';
+        }
+        return '<main class="iristick-news-db"><header><span>TIN TỨC</span><h1>Tin tức mới nhất</h1><p>Cập nhật những tin tức, sự kiện và câu chuyện mới nhất từ Iristick Việt Nam.</p></header><section class="iristick-news-grid">' . ($cards ?: '<p>Chưa có bài viết.</p>') . '</section></main>';
+    }
+
+    $post = get_page_by_path($slug, OBJECT, 'post');
+    if (!$post || $post->post_status !== 'publish') {
+        return '';
+    }
+    $image = get_the_post_thumbnail_url($post, 'full') ?: get_post_meta($post->ID, '_iristick_blog_image_url', true);
+    return '<main class="iristick-news-single"><a class="iristick-news-back" href="' . esc_url(home_url('/blog/news/')) . '">← Tin tức</a><article>'
+        . '<header><time>' . esc_html(get_the_date('d/m/Y', $post)) . '</time><h1>' . esc_html($post->post_title) . '</h1>'
+        . ($post->post_excerpt ? '<p class="iristick-news-intro">' . esc_html($post->post_excerpt) . '</p>' : '') . '</header>'
+        . ($image ? '<img class="iristick-news-hero" src="' . esc_url($image) . '" alt="' . esc_attr($post->post_title) . '">' : '')
+        . '<div class="iristick-news-content">' . apply_filters('the_content', $post->post_content) . '</div></article></main>';
+}
+
+function iristick_inject_blog_database_content($html) {
+    $request_path = iristick_static_request_path();
+    $content = iristick_blog_database_content($request_path);
+    if ($content === '') {
+        return $html;
+    }
+    return preg_replace('#<div class="app-container".*?</div></div><!----><!----></div><!---->\s*(?=<!--\[!-->.*?<div class="footer-wrapper)#is', $content, $html, 1) ?: $html;
+}
+
 function iristick_static_render($file) {
     $html = file_get_contents($file);
     if ($html === false) {
@@ -1483,6 +1664,8 @@ function iristick_static_render($file) {
     // WooCommerce Blocks may print this after its enqueue phase; static pages
     // contain no Woo blocks, so keep its broad global CSS out of the snapshot.
     $html = preg_replace('#<link\b[^>]*wc-blocks\.css[^>]*>\s*#i', '', $html);
+    $html = iristick_inject_blog_database_content($html);
+    $html = iristick_convert_static_euro_prices($html);
 
     echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted internal page templates.
 }
@@ -1568,13 +1751,14 @@ function iristick_handle_trial_request() {
     $name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
     $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
     $company = isset($_POST['company']) ? sanitize_text_field(wp_unslash($_POST['company'])) : '';
-    $phone = isset($_POST['phone']) ? sanitize_text_field(wp_unslash($_POST['phone'])) : '';
+    $phone = isset($_POST['phone']) ? iristick_normalize_vietnam_phone(sanitize_text_field(wp_unslash($_POST['phone']))) : '';
     $hardware = isset($_POST['hardware']) ? sanitize_text_field(wp_unslash($_POST['hardware'])) : '';
     $software = isset($_POST['software']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['software'])) : array();
     $quantity = isset($_POST['quantity']) ? max(1, min(10, absint($_POST['quantity']))) : 1;
     $notes = isset($_POST['notes']) ? sanitize_textarea_field(wp_unslash($_POST['notes'])) : '';
 
-    if ($name === '' || !is_email($email) || $hardware === '' || empty($software)) {
+    if ($name === '' || !is_email($email) || $hardware === '' || empty($software)
+        || ($phone !== '' && !preg_match('/^0(?:3|5|7|8|9)[0-9]{8}$/', $phone))) {
         wp_safe_redirect(home_url('/trial-order/?status=invalid'));
         exit;
     }
@@ -1583,20 +1767,40 @@ function iristick_handle_trial_request() {
         ? sanitize_email(IRISTICK_DEMO_EMAIL)
         : sanitize_email(get_option('admin_email'));
     $recipient = apply_filters('iristick_trial_recipient_email', $default_recipient);
-    $subject = sprintf('[Iristick] Đăng ký gói dùng thử 6 tuần từ %s', $name);
-    $message = implode("\n", array(
-        'Có một đăng ký gói dùng thử 6 tuần mới:', '',
-        'Họ và tên: ' . $name,
-        'Email: ' . $email,
-        'Số điện thoại: ' . ($phone ?: 'Không cung cấp'),
-        'Công ty: ' . ($company ?: 'Không cung cấp'),
-        'Thiết bị: ' . $hardware,
-        'Phần mềm: ' . implode(', ', $software),
-        'Số lượng: ' . $quantity,
-        'Tạm tính: €' . number_format(1000 * $quantity, 0, ',', '.') . ' (chưa gồm VAT)',
-        '', 'Ghi chú:', $notes ?: 'Không cung cấp',
-    ));
-    $sent = wp_mail($recipient, $subject, $message, array('Reply-To: ' . $name . ' <' . $email . '>'));
+    $subject = sprintf('[Iristick Việt Nam] Đăng ký dùng thử 6 tuần từ %s', $name);
+    $rows = array(
+        'Họ và tên' => $name,
+        'Email' => $email,
+        'Số điện thoại' => $phone ?: 'Không cung cấp',
+        'Công ty' => $company ?: 'Không cung cấp',
+        'Thiết bị dùng thử' => $hardware,
+        'Phần mềm dùng thử' => implode(', ', $software),
+        'Số lượng' => $quantity,
+        'Tạm tính' => number_format(1000 * IRISTICK_EUR_TO_VND_RATE * $quantity, 0, ',', '.') . ' ₫ (chưa gồm VAT)',
+    );
+    $table_rows = '';
+    foreach ($rows as $label => $value) {
+        $table_rows .= '<tr><th style="width:38%;padding:12px 14px;text-align:left;border-bottom:1px solid #e6e3ef;background:#f5f3fb;color:#27242d;font-size:14px;">'
+            . esc_html($label)
+            . '</th><td style="padding:12px 14px;border-bottom:1px solid #e6e3ef;color:#3d3944;font-size:14px;">'
+            . esc_html($value)
+            . '</td></tr>';
+    }
+    $message = '<!doctype html><html lang="vi"><body style="margin:0;padding:0;background:#f4f3f8;font-family:Arial,sans-serif;color:#19191c;">'
+        . '<div style="padding:32px 12px;"><div style="max-width:640px;margin:0 auto;overflow:hidden;border-radius:20px;background:#fff;box-shadow:0 14px 38px rgba(30,25,48,.1);">'
+        . '<div style="padding:28px 32px;background:#19191c;color:#fff;"><div style="font-size:26px;font-weight:700;">Iristick Việt Nam</div><div style="margin-top:6px;color:#c9c2ff;font-size:15px;">Đăng ký chương trình dùng thử 6 tuần</div></div>'
+        . '<div style="padding:30px 32px;"><p style="margin:0 0 20px;font-size:16px;line-height:1.6;">Website vừa nhận được một yêu cầu đăng ký chương trình dùng thử mới.</p>'
+        . '<table role="presentation" style="width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid #e6e3ef;border-radius:12px;">' . $table_rows . '</table>'
+        . '<div style="margin-top:22px;padding:18px;border-radius:12px;background:#f5f3fb;"><strong style="display:block;margin-bottom:8px;color:#27242d;">Ghi chú</strong><div style="font-size:14px;line-height:1.65;color:#4d4855;">'
+        . nl2br(esc_html($notes ?: 'Không cung cấp'))
+        . '</div></div><p style="margin:24px 0 0;color:#77727e;font-size:13px;">Bạn có thể trả lời trực tiếp email này để liên hệ với khách hàng.</p></div>'
+        . '<div style="padding:18px 32px;background:#faf9fc;color:#817c87;text-align:center;font-size:12px;">Iristick Việt Nam</div>'
+        . '</div></div></body></html>';
+    $headers = array(
+        'Content-Type: text/html; charset=UTF-8',
+        'Reply-To: ' . $name . ' <' . $email . '>',
+    );
+    $sent = wp_mail($recipient, $subject, $message, $headers);
     wp_safe_redirect(home_url('/trial-order/?status=' . ($sent ? 'success' : 'error')));
     exit;
 }

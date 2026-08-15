@@ -242,7 +242,7 @@
         ];
 
         function money(value) {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value * 35000);
         }
 
         function sectionBody(section) {
@@ -274,8 +274,8 @@
                 button.className = 'pc-card pc-software-card svelte-yaxynm' + (selected ? ' selected' : '');
                 button.style.setProperty('--accent', product.color);
                 button.style.setProperty('--tint', product.tint);
-                var save = product.name.indexOf('Assist') !== -1 ? '<span class="pc-sol-save svelte-yaxynm">Tiết kiệm €75</span>' : '';
-                var hint = product.name.indexOf('Assist') !== -1 && state.hardware === 'Iristick.G3' ? '<div class="pc-sol-hint svelte-yaxynm"><span class="material-symbols-outlined svelte-yaxynm">bolt</span>Gói cùng G3 chỉ €2.500 trong tháng này</div>' : '';
+                var save = product.name.indexOf('Assist') !== -1 ? '<span class="pc-sol-save svelte-yaxynm">Tiết kiệm 2.625.000 ₫</span>' : '';
+                var hint = product.name.indexOf('Assist') !== -1 && state.hardware === 'Iristick.G3' ? '<div class="pc-sol-hint svelte-yaxynm"><span class="material-symbols-outlined svelte-yaxynm">bolt</span>Gói cùng G3 chỉ 87.500.000 ₫ trong tháng này</div>' : '';
                 var features = product.features.map(function (feature) { return '<li><span class="material-symbols-outlined">check</span>' + feature + '</li>'; }).join('');
                 button.innerHTML = '<div class="pricing-sol-top"><div class="pc-sol-head svelte-yaxynm"><span class="pc-sol-icon svelte-yaxynm"><span class="material-symbols-outlined svelte-yaxynm">' + product.icon + '</span></span><div class="pc-sol-name svelte-yaxynm">' + product.name + '</div>' + save + '</div>' + hint +
                     '<div class="pc-sol-price svelte-yaxynm">' + money(product.price) + ' <small class="svelte-yaxynm">/ năm cho mỗi ' + product.unit + '</small></div></div><ul class="pricing-sol-features">' + features + '</ul>';

@@ -1,0 +1,17 @@
+/* Match the wp-admin Visual editor to the public Iristick article body. */
+html{background:#fff}
+body#tinymce.wp-editor{max-width:864px!important;margin:0 auto!important;padding:36px 28px 70px!important;background:#fff!important;color:#19191c!important;font-family:"DM Sans",Arial,sans-serif!important;font-size:18px!important;line-height:1.8!important;box-sizing:border-box}
+body#tinymce.wp-editor p{margin:0 0 24px!important}
+body#tinymce.wp-editor h2{margin:44px 0 18px!important;color:#19191c!important;font-size:34px!important;line-height:1.2!important;font-weight:650!important}
+body#tinymce.wp-editor h3{margin:34px 0 15px!important;color:#19191c!important;font-size:26px!important;line-height:1.25!important;font-weight:650!important}
+body#tinymce.wp-editor h4{margin:28px 0 12px!important;font-size:21px!important;line-height:1.3!important}
+body#tinymce.wp-editor strong{font-weight:750!important}
+body#tinymce.wp-editor a{color:#5c50d2!important;text-decoration:underline!important;text-underline-offset:3px}
+body#tinymce.wp-editor img{display:block;max-width:100%!important;height:auto!important;margin:30px auto!important;border-radius:18px!important}
+body#tinymce.wp-editor blockquote{margin:32px 0!important;padding:22px 26px!important;border-left:4px solid #7668ee!important;border-radius:0 14px 14px 0!important;background:#f3f1fb!important;color:#403b49!important;font-size:20px!important}
+body#tinymce.wp-editor ul,body#tinymce.wp-editor ol{margin:0 0 26px!important;padding-left:28px!important}
+body#tinymce.wp-editor li{margin:8px 0!important}
+body#tinymce.wp-editor hr{margin:40px 0!important;border:0!important;border-top:1px solid #dedbe5!important}
+body#tinymce.wp-editor table{width:100%!important;margin:28px 0!important;border-collapse:collapse!important}
+body#tinymce.wp-editor th,body#tinymce.wp-editor td{padding:12px 14px!important;border:1px solid #dedbe5!important;text-align:left!important}
+body#tinymce.wp-editor th{background:#f3f1fb!important}

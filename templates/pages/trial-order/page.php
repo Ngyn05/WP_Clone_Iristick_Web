@@ -70,7 +70,7 @@
                     <label>Họ và tên *<input name="name" autocomplete="name" required></label>
                     <label>Email *<input type="email" name="email" autocomplete="email" required></label>
                     <label>Công ty<input name="company" autocomplete="organization"></label>
-                    <label>Số điện thoại<input name="phone" autocomplete="tel"></label>
+                    <label>Số điện thoại<input type="tel" name="phone" inputmode="numeric" autocomplete="tel" placeholder="Ví dụ: 0917834532" pattern="(?:\+84|0)(?:3|5|7|8|9)[0-9]{8}" minlength="10" maxlength="12" title="Nhập số di động Việt Nam, ví dụ 0917834532 hoặc +84917834532"></label>
                 </div>
                 <label>Số lượng<input type="number" name="quantity" value="1" min="1" max="10"></label>
                 <label>Ghi chú<textarea name="notes" rows="4"></textarea></label>
