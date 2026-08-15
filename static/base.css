@@ -1,0 +1,396 @@
+/* semantic color variables for this project */
+:root {
+	--color-background: #f8f8f8;
+	--color-background-inverse: rgb(29, 29, 31);
+	--color-text: #1d1d1f;
+	--color-text-inverse: #f8f8f8;
+	--color-gray-text: rgb(107, 107, 107);
+
+	--vt-c-data-collection-color: #4da198;
+	--vt-c-tools-color: #feee8c;
+	--vt-c-remote-assistance-color: #c3b1e1;
+	--vt-c-assist-color: #768bfc;
+	--vt-c-acty-color: #f4e00f;
+
+	--vt-c-data-collection-backgroundcolor: rgba(77, 161, 152, 0.1);
+	--vt-c-tools-backgroundcolor: rgb(254, 238, 140, 0.2);
+	--vt-c-remote-assistance-backgroundcolor: rgb(195, 177, 225, 0.2);
+	--vt-c-assist-backgroundcolor: rgb(167, 199, 231, 0.2);
+	--vt-c-acty-backgroundcolor: rgb(244, 224, 15, 0.1);
+
+	--color-image-background: rgb(192, 192, 192);
+
+	--vt-f-font-family-heading:
+		'DM Sans', 'Manrope', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+		Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+	--vt-f-font-family-text:
+		'Manrope', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+		Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+
+	--vt-base-screen-width: 1280px;
+	--vt-base-1-screen-width: 980px;
+	--font-size-block: 28px;
+	--box-shadow: 0;
+	--box-shadow: 0;
+	/*0 10px 15px 0 #1d1d1f1f, 0 6px 20px 0 #1d1d1f0f;*/
+}
+
+/* @media (prefers-color-scheme: dark) {
+	:root {
+		--color-background: #rgb(29, 29, 31);
+		--color-background-inverse: rgba(60, 60, 60, 0.66);
+
+		--color-image-background: rgba(60, 60, 60, 0.86);
+
+		--color-text: #f8f8f8;
+		--color-text-inverse: #f8f8f8;
+	}
+} */
+
+.material-symbols-outlined {
+	font-variation-settings:
+		'FILL' 0,
+		'wght' 400,
+		'GRAD' 0,
+		'opsz' 16;
+}
+
+body {
+	font-style: normal;
+	min-height: 100vh;
+	color: var(--color-text);
+	background: var(--color-background);
+	transition:
+		color 0.5s,
+		background-color 0.5s;
+	font-size: 19px;
+	font-weight: 450;
+	line-height: 1.3em;
+	font-family: var(--vt-f-font-family-text);
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+button {
+	font-size: 19px;
+}
+
+/* Critical nav layout — prevents FOUC before scoped component CSS loads */
+.nav-container {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	height: 5rem;
+	align-items: center;
+}
+
+.nav-pages {
+	flex-grow: 2;
+	display: flex;
+	justify-content: center;
+}
+
+.nav-pages > button {
+	min-width: unset;
+	min-height: unset;
+	background-color: unset;
+	color: var(--color-text);
+	padding: 0 1rem;
+	font-size: unset;
+	font-weight: unset;
+	white-space: nowrap;
+}
+
+.iri-preload * {
+	transition: none !important;
+	animation-duration: 0.001s !important;
+}
+
+.container {
+	width: 100vw;
+	padding-bottom: 5rem;
+}
+
+.app-container {
+	width: 100vw;
+	margin: 0 auto;
+}
+
+.componentblock {
+	min-height: 45rem;
+	margin: 0 auto 10rem auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.minimal-componentblock {
+	min-height: 25rem;
+	margin: 5rem auto 5rem auto;
+}
+
+h1,
+h2,
+footer .footer-title {
+	font-weight: 400;
+	font-family: var(--vt-f-font-family-heading);
+	/* text-transform: capitalize; */
+}
+
+a {
+	text-decoration: none;
+	color: var(--color-text);
+}
+
+.bold {
+	font-weight: 600;
+}
+
+.focussed.data {
+	color: var(--vt-c-data-collection-color);
+}
+
+.focussed.teams {
+	color: var(--vt-c-remote-assistance-color);
+}
+
+.focussed.assist {
+	color: var(--vt-c-assist-color);
+}
+
+.title-component {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	justify-content: center;
+	gap: 2rem;
+}
+
+button {
+	border-radius: 0.75rem;
+	background-color: var(--color-background-inverse);
+	color: var(--color-text-inverse);
+	text-align: center;
+	justify-content: center;
+	align-items: center;
+	min-width: 10rem;
+	min-height: 3rem;
+	padding-left: 1.5rem;
+	padding-right: 1.5rem;
+	font-family: var(----vt-f-font-family-text);
+	font-size: 16px;
+	/* text-transform: capitalize; */
+	font-weight: 650;
+	line-height: 1em;
+	text-decoration: none;
+	transition:
+		background-color 0.3s,
+		border-radius 0.3s ease-out;
+	display: inline-flex;
+	border: 0px;
+}
+
+button.inverse {
+	background-color: var(--color-background);
+	border: 2px solid var(--color-background-inverse);
+	color: var(--color-text);
+}
+
+button:hover {
+	cursor: pointer;
+}
+
+/** Floating button **/
+.floating-button-container {
+	position: fixed;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	bottom: 20px;
+	width: 100%;
+}
+
+.floating-button {
+	z-index: 700;
+	border-radius: 50px;
+	background-color: #ff6f59;
+	color: var(--color-text-inverse);
+	text-align: center;
+	min-height: 4rem;
+	min-width: 10rem;
+	width: auto;
+	padding-left: 1.5rem;
+	padding-right: 1.5rem;
+	font-family: var(----vt-f-font-family-text);
+	font-size: 16px;
+	font-weight: 650;
+	line-height: 1em;
+	text-decoration: none;
+	transition:
+		background-color 0.3s,
+		border-radius 0.3s ease-out;
+	border: 0px;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.floating-button.tools {
+	background-color: var(--vt-c-tools-color);
+	color: var(--color-text);
+}
+
+.floating-button:hover {
+	cursor: pointer;
+}
+
+@media (min-width: 1441px) {
+	/* Styles for large screens */
+	.componentblock,
+	.minimal-componentblock {
+		max-width: var(--vt-base-screen-width);
+	}
+
+	h1,
+	footer .footer-title {
+		font-size: 4em;
+		line-height: 1em;
+		margin: 1rem 0;
+	}
+
+	h2,
+	input {
+		font-size: 3rem;
+		line-height: 1.1em;
+	}
+
+	p {
+		font-size: 28px;
+		line-height: 1.4em;
+	}
+
+	small {
+		font-size: 17px;
+		line-height: 1.2em;
+	}
+
+	h2,
+	p {
+		margin: 1rem 0;
+	}
+}
+
+@media (max-width: 1440px) {
+	/* Styles for desktops */
+	.componentblock,
+	.minimal-componentblock {
+		max-width: var(--vt-base-1-screen-width);
+	}
+
+	h1,
+	footer .footer-title {
+		font-size: 4em;
+		line-height: 1.1em;
+	}
+
+	h2,
+	input {
+		font-size: 3rem;
+		line-height: 1.1em;
+		margin: 1rem 0;
+	}
+
+	p {
+		font-size: 28px;
+		line-height: 1.4em;
+		margin: 0.5rem 0;
+	}
+
+	small {
+		font-size: 17px;
+		line-height: 1.2em;
+	}
+}
+
+@media (max-width: 1024px) {
+	/* Styles for tablets */
+	.componentblock,
+	.minimal-componentblock {
+		max-width: 90%;
+	}
+
+	h1,
+	footer .footer-title {
+		font-size: 3em;
+	}
+
+	h2,
+	input {
+		font-size: 2.2em;
+	}
+
+	p {
+		font-size: 24px;
+	}
+}
+
+@media (max-width: 768px) {
+	h1,
+	footer .footer-title {
+		font-size: 2em;
+	}
+
+	h2,
+	input {
+		font-size: 1.8em;
+	}
+
+	p {
+		font-size: 22px;
+	}
+
+	small {
+		font-size: 17px;
+		line-height: 1.2em;
+	}
+}
+
+@media (max-width: 480px) {
+	.componentblock,
+	.minimal-componentblock {
+		max-width: 95%;
+	}
+
+	.componentblock {
+		min-height: 35rem;
+	}
+
+	h1,
+	footer .footer-title {
+		font-size: 2em;
+	}
+
+	h2,
+	input {
+		font-size: 1.8em;
+	}
+
+	p {
+		font-size: 22px;
+	}
+
+	.title-component {
+		min-height: 25rem;
+		gap: 1rem;
+	}
+
+	small {
+		font-size: 12px;
+		line-height: 1.2em;
+	}
+}
