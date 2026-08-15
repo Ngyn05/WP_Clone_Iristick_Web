@@ -3,9 +3,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISTICK_STATIC_VERSION', '1.2.1');
+define('IRISTICK_STATIC_VERSION', '1.4.6');
 define('IRISTICK_STATIC_DIR', get_template_directory());
 define('IRISTICK_STATIC_URI', get_template_directory_uri());
+define('IRISTICK_EUR_TO_VND_RATE', 35000);
+
+add_filter('wp_mail_from_name', function () {
+    return 'Iristick Việt Nam';
+});
 
 function iristick_static_page_root() {
     return IRISTICK_STATIC_DIR . '/templates/pages';
@@ -15,8 +20,19 @@ function iristick_static_setup() {
     add_theme_support('title-tag');
     add_theme_support('post-thumbnails');
     add_theme_support('html5', array('style', 'script', 'gallery', 'caption'));
+    add_theme_support('woocommerce');
 }
 add_action('after_setup_theme', 'iristick_static_setup');
+
+function iristick_custom_favicon() {
+    $version = rawurlencode(IRISTICK_STATIC_VERSION);
+    $favicon_48 = IRISTICK_STATIC_URI . '/assets/images/favicon-iristick-large-48.png?v=' . $version;
+    $favicon_192 = IRISTICK_STATIC_URI . '/assets/images/favicon-iristick-large-192.png?v=' . $version;
+    echo '<link rel="icon" type="image/png" sizes="48x48" href="' . esc_url($favicon_48) . '">';
+    echo '<link rel="shortcut icon" type="image/png" sizes="48x48" href="' . esc_url($favicon_48) . '">';
+    echo '<link rel="apple-touch-icon" sizes="192x192" href="' . esc_url($favicon_192) . '">';
+}
+add_action('wp_head', 'iristick_custom_favicon', PHP_INT_MAX);
 
 function iristick_static_assets() {
     wp_enqueue_style('iristick-static-admin-fixes', get_stylesheet_uri(), array(), IRISTICK_STATIC_VERSION);
@@ -24,6 +40,14 @@ function iristick_static_assets() {
         wp_enqueue_style(
             'iristick-demo-form',
             IRISTICK_STATIC_URI . '/assets/css/demo-form.css',
+            array(),
+            IRISTICK_STATIC_VERSION
+        );
+    }
+    if (function_exists('is_product') && is_product()) {
+        wp_enqueue_style(
+            'iristick-woocommerce-product',
+            IRISTICK_STATIC_URI . '/assets/css/woocommerce-product.css',
             array(),
             IRISTICK_STATIC_VERSION
         );
@@ -39,6 +63,1112 @@ function iristick_static_assets() {
     }
 }
 add_action('wp_enqueue_scripts', 'iristick_static_assets');
+
+function iristick_seed_woocommerce_products() {
+    if (!class_exists('WC_Product_Simple') || get_option('iristick_seeded_products_v1')) {
+        return;
+    }
+
+    // Set the flag before inserts so simultaneous front-end/API requests cannot
+    // run the seed twice. It is removed again if product creation throws.
+    update_option('iristick_seeded_products_v1', 'running', false);
+
+    $products = array(
+        array('Iristick.G3', 'IR-G3', '2275', 'Kính thông minh công nghiệp thế hệ mới.'),
+        array('Iristick.G2 PRO', 'IR-G2-PRO', '1975', 'Kính thông minh có chứng nhận an toàn.'),
+        array('Iristick.H1', 'IR-H1', '', 'Thiết bị kính thông minh chuyên dụng hạng nặng.'),
+        array('Iristick.H3', 'IR-H3', '', 'Kính thông minh Iristick thế hệ tiếp theo.'),
+    );
+
+    foreach ($products as $data) {
+        if (wc_get_product_id_by_sku($data[1])) {
+            continue;
+        }
+        $product = new WC_Product_Simple();
+        $product->set_name($data[0]);
+        $product->set_sku($data[1]);
+        $product->set_status('publish');
+        $product->set_catalog_visibility('visible');
+        $product->set_short_description($data[3]);
+        $product->set_description('N/A');
+        if ($data[2] !== '') {
+            $product->set_regular_price($data[2]);
+        }
+        $product->set_manage_stock(false);
+        $product->set_stock_status('instock');
+        $product->save();
+    }
+
+    update_option('iristick_seeded_products_v1', 1, false);
+}
+add_action('init', 'iristick_seed_woocommerce_products', 20);
+
+function iristick_cleanup_seed_duplicate() {
+    if (!class_exists('WooCommerce') || get_option('iristick_seed_cleanup_v1')) {
+        return;
+    }
+    $duplicates = get_posts(array(
+        'post_type' => 'product',
+        'post_status' => array('publish', 'draft', 'private'),
+        'posts_per_page' => -1,
+        'fields' => 'ids',
+        'meta_key' => '_sku',
+        'meta_value' => 'IR-H1',
+        'orderby' => 'ID',
+        'order' => 'ASC',
+    ));
+    foreach (array_slice($duplicates, 1) as $duplicate_id) {
+        wp_delete_post($duplicate_id, true);
+    }
+    update_option('iristick_seed_cleanup_v1', 1, false);
+}
+add_action('init', 'iristick_cleanup_seed_duplicate', 21);
+
+function iristick_sync_full_product_content() {
+    if (!function_exists('wc_get_product_id_by_sku') || get_option('iristick_product_content_v3')) {
+        return;
+    }
+
+    $asset = IRISTICK_STATIC_URI . '/static/_app/immutable/assets/';
+    $catalog = array(
+        'IR-G3' => array(
+            'short' => 'Kính thông minh được chứng nhận an toàn, kết nối USB-C, camera kép và thiết kế công thái học cho công việc hiện trường.',
+            'description' => 'Iristick.G3 là kính thông minh công nghiệp thế hệ mới, hỗ trợ gọi video rảnh tay, quét mã vạch và chia sẻ góc nhìn trực tiếp với chuyên gia từ xa.',
+            'media' => $asset . 'website-header-g3.ChWKG3uj.mp4', 'media_type' => 'video',
+            'features' => array('Kết nối USB-C', 'Camera kép', 'Quét mã vạch', 'Điều khiển giọng nói', 'Tương thích kính thuốc'),
+            'specs' => array('Nguồn điện' => 'Điện thoại thông minh', 'Trọng lượng' => 'N/A', 'Hệ điều hành' => 'Android'),
+            'documents' => array('Thông số kỹ thuật G3' => $asset . 'spec-sheet-iristick-g3.d01GFml7.pdf'),
+        ),
+        'IR-G2-PRO' => array(
+            'short' => 'Kính thông minh công nghiệp bền bỉ với camera, quét mã vạch và hỗ trợ từ xa rảnh tay.',
+            'description' => 'Iristick.G2 PRO hỗ trợ kỹ thuật viên làm việc rảnh tay, kết nối với chuyên gia và truy cập hướng dẫn ngay tại hiện trường.',
+            'media' => $asset . 'website-header-g2-h264.Blab_mEs.mp4', 'media_type' => 'video',
+            'features' => array('Camera trung tâm', 'Quét mã vạch', 'Điều khiển giọng nói', 'Kết nối điện thoại'),
+            'specs' => array('Nguồn điện' => 'Điện thoại thông minh', 'Hệ điều hành' => 'Android', 'Chứng nhận' => 'N/A'),
+            'documents' => array('Thông số kỹ thuật G2' => $asset . 'spec-sheet-iristick-g2.DRFRI4Ef.pdf'),
+        ),
+        'IR-H1' => array(
+            'short' => 'Kính thông minh hạng nặng dành cho môi trường công nghiệp và thiết bị bảo hộ.',
+            'description' => 'Iristick.H1 là thiết bị đeo đầu chuyên dụng với camera trung tâm, hỗ trợ quét mã vạch và làm việc rảnh tay.',
+            'media' => $asset . 'website-header-h1-h264.B_hsy1Mk.mp4', 'media_type' => 'video',
+            'features' => array('Thiết kế hạng nặng', 'Camera trung tâm', 'Quét mã vạch', 'Hỗ trợ thiết bị bảo hộ'),
+            'specs' => array('Tình trạng' => 'Ngừng bán', 'Nguồn điện' => 'N/A', 'Trọng lượng' => 'N/A'),
+            'documents' => array('Thông số kỹ thuật H1' => $asset . 'spec-sheet-iristick-h1.CgDSlgGY.pdf'),
+        ),
+        'IR-H3' => array(
+            'short' => 'Thế hệ kính thông minh hạng nặng tiếp theo của Iristick.',
+            'description' => 'Iristick.H3 đang được phát triển cho các môi trường làm việc công nghiệp đòi hỏi độ bền cao.',
+            'media' => '', 'media_type' => 'N/A',
+            'features' => array('Thế hệ tiếp theo', 'Thiết kế công nghiệp'),
+            'specs' => array('Ngày phát hành' => 'N/A', 'Thông số kỹ thuật' => 'N/A'),
+            'documents' => array(),
+        ),
+        'IR-COLLECTOR' => array(
+            'short' => 'Thu thập dữ liệu rảnh tay bằng giọng nói, mã vạch và biểu mẫu có cấu trúc.',
+            'description' => 'Iristick.Collector giúp nhân viên ghi nhận dữ liệu tại hiện trường mà không cần cầm giấy, điện thoại hoặc máy quét riêng.',
+            'media' => $asset . 'agro-video-header-h264.CDGfQvC9.mp4', 'media_type' => 'video',
+            'features' => array('Nhập liệu bằng giọng nói', 'Quét mã vạch', 'Biểu mẫu không giới hạn', 'Đồng bộ dữ liệu'),
+            'specs' => array('Loại sản phẩm' => 'Phần mềm', 'Giấy phép' => 'Theo người dùng'),
+            'documents' => array(),
+        ),
+        'IR-TEAMS' => array(
+            'short' => 'Gọi Microsoft Teams rảnh tay trực tiếp từ kính thông minh Iristick.',
+            'description' => 'Iristick.Teams kết nối kỹ thuật viên hiện trường với đồng nghiệp và chuyên gia bằng cuộc gọi Microsoft Teams rảnh tay.',
+            'media' => $asset . 'iristick-teams-header-h264.C8ZelPPr.mp4', 'media_type' => 'video',
+            'features' => array('Microsoft Teams', 'Cuộc gọi rảnh tay', 'Đăng nhập một lần', 'Chia sẻ góc nhìn trực tiếp'),
+            'specs' => array('Loại sản phẩm' => 'Phần mềm', 'Giấy phép' => 'Theo cặp kính'),
+            'documents' => array(),
+        ),
+        'IR-ASSIST' => array(
+            'short' => 'Hỗ trợ từ xa nhanh chóng, đáng tin cậy và không yêu cầu người tham gia cài ứng dụng.',
+            'description' => 'Iristick.Assist cho phép chuyên gia nhìn thấy góc nhìn của nhân viên hiện trường và hướng dẫn công việc theo thời gian thực.',
+            'media' => $asset . 'assist.SHeORdFk.webp', 'media_type' => 'image',
+            'features' => array('Hỗ trợ từ xa', 'Chia sẻ màn hình', 'Giấy phép linh hoạt', 'Không cần cài ứng dụng'),
+            'specs' => array('Loại sản phẩm' => 'Phần mềm', 'Giấy phép' => 'Theo cặp kính'),
+            'documents' => array(),
+        ),
+    );
+
+    foreach ($catalog as $sku => $data) {
+        $product_id = wc_get_product_id_by_sku($sku);
+        $product = $product_id ? wc_get_product($product_id) : false;
+        if (!$product) {
+            continue;
+        }
+        $product->set_short_description($data['short']);
+        $product->set_description($data['description']);
+        $product->update_meta_data('_iristick_media_url', $data['media'] !== '' ? $data['media'] : 'N/A');
+        $product->update_meta_data('_iristick_media_type', $data['media_type']);
+        $product->update_meta_data('_iristick_features', $data['features']);
+        $product->update_meta_data('_iristick_specs', $data['specs']);
+        $product->update_meta_data('_iristick_documents', $data['documents'] ?: array('N/A' => 'N/A'));
+        $product->update_meta_data('_iristick_faq', array(
+            array('question' => 'Sản phẩm này phù hợp với ai?', 'answer' => $data['short']),
+            array('question' => 'Tôi có thể yêu cầu tư vấn không?', 'answer' => 'Có. Vui lòng sử dụng biểu mẫu đặt lịch demo để liên hệ đội ngũ Iristick Việt Nam.'),
+        ));
+        $product->set_stock_status('instock');
+        $product->save();
+        wc_delete_product_transients($product->get_id());
+    }
+
+    update_option('iristick_product_content_v3', current_time('mysql'), false);
+}
+add_action('init', 'iristick_sync_full_product_content', 22);
+
+function iristick_sync_product_categories() {
+    if (!taxonomy_exists('product_cat')) {
+        return;
+    }
+    $categories = array('san-pham' => 'Sản phẩm');
+    foreach ($categories as $slug => $name) {
+        if (!term_exists($slug, 'product_cat')) {
+            wp_insert_term($name, 'product_cat', array('slug' => $slug));
+        }
+    }
+    $assignments = array(
+        'IR-G3' => 'san-pham', 'IR-G2-PRO' => 'san-pham', 'IR-H1' => 'san-pham', 'IR-H3' => 'san-pham',
+    );
+    foreach ($assignments as $sku => $category_slug) {
+        $product_id = wc_get_product_id_by_sku($sku);
+        if ($product_id) {
+            wp_set_object_terms($product_id, $category_slug, 'product_cat', false);
+            wc_delete_product_transients($product_id);
+        }
+    }
+}
+add_action('init', 'iristick_sync_product_categories', 24);
+
+/**
+ * Collector, Teams and Assist are static tools, not WooCommerce products.
+ * Move the records previously seeded by this theme to Trash once so they stay
+ * recoverable from the WordPress admin.
+ */
+function iristick_remove_tools_from_woocommerce() {
+    if (!function_exists('wc_get_product_id_by_sku') || get_option('iristick_tools_removed_from_wc_v1')) {
+        return;
+    }
+
+    foreach (array('IR-COLLECTOR', 'IR-TEAMS', 'IR-ASSIST') as $sku) {
+        $product_id = wc_get_product_id_by_sku($sku);
+        if ($product_id) {
+            wp_trash_post($product_id);
+        }
+    }
+
+    update_option('iristick_tools_removed_from_wc_v1', 1, false);
+}
+add_action('init', 'iristick_remove_tools_from_woocommerce', 26);
+
+function iristick_extract_static_product_faqs($file) {
+    $html = is_file($file) ? file_get_contents($file) : '';
+    if ($html === '' || !preg_match('/>FAQ<\/p>/i', $html, $start, PREG_OFFSET_CAPTURE)) {
+        return array();
+    }
+    $section = substr($html, $start[0][1]);
+    $footer_position = strpos($section, 'footer-wrapper');
+    if ($footer_position !== false) {
+        $section = substr($section, 0, $footer_position);
+    }
+    preg_match_all(
+        '#<div class="add-content-topic[^"]*"><div[^>]*><strong>(.*?)</strong></div>\s*(.*?)</div>#is',
+        $section,
+        $matches,
+        PREG_SET_ORDER
+    );
+    $faqs = array();
+    foreach ($matches as $match) {
+        $question = trim(wp_strip_all_tags(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        $answer = trim(wp_strip_all_tags(html_entity_decode($match[2], ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        if ($question !== '' && $answer !== '') {
+            $faqs[] = array('question' => $question, 'answer' => $answer);
+        }
+    }
+    return $faqs;
+}
+
+function iristick_extract_static_product_sections($file) {
+    $html = is_file($file) ? file_get_contents($file) : '';
+    $result = array('features' => array(), 'specs' => array(), 'documents' => array());
+    if ($html === '') {
+        return $result;
+    }
+    $headers = array();
+    $offset = 0;
+    while (($header_position = strpos($html, '<div class="additional-header', $offset)) !== false) {
+        $paragraph_position = strpos($html, '<p', $header_position);
+        $paragraph_start = $paragraph_position !== false ? strpos($html, '>', $paragraph_position) : false;
+        $paragraph_end = $paragraph_start !== false ? strpos($html, '</p>', $paragraph_start) : false;
+        if ($paragraph_start === false || $paragraph_end === false) {
+            break;
+        }
+        $headers[] = array(
+            'position' => $header_position,
+            'name' => substr($html, $paragraph_start + 1, $paragraph_end - $paragraph_start - 1),
+        );
+        $offset = $paragraph_end + 4;
+    }
+    $count = count($headers);
+    for ($index = 0; $index < $count; $index++) {
+        $start = $headers[$index]['position'];
+        $end = $index + 1 < $count ? $headers[$index + 1]['position'] : strlen($html);
+        $section = substr($html, $start, $end - $start);
+        $section_name = trim(wp_strip_all_tags(html_entity_decode($headers[$index]['name'], ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        $normalized = strtolower(remove_accents($section_name));
+        if (strpos($normalized, 'faq') !== false) {
+            continue;
+        }
+        $topics = array();
+        $topic_offset = 0;
+        $topic_marker = '<div class="add-content-topic';
+        while (($topic_position = strpos($section, $topic_marker, $topic_offset)) !== false) {
+            $next_topic = strpos($section, $topic_marker, $topic_position + strlen($topic_marker));
+            $topic_html = substr($section, $topic_position, ($next_topic !== false ? $next_topic : strlen($section)) - $topic_position);
+            $strong_start = strpos($topic_html, '<strong>');
+            $strong_end = $strong_start !== false ? strpos($topic_html, '</strong>', $strong_start) : false;
+            if ($strong_start !== false && $strong_end !== false) {
+                $answer_start = strpos($topic_html, '</div>', $strong_end);
+                $topics[] = array(
+                    'title' => substr($topic_html, $strong_start + 8, $strong_end - $strong_start - 8),
+                    'answer' => $answer_start !== false ? substr($topic_html, $answer_start + 6) : '',
+                    'html' => $topic_html,
+                );
+            }
+            $topic_offset = $next_topic !== false ? $next_topic : strlen($section);
+        }
+        foreach ($topics as $topic) {
+            $title = trim(wp_strip_all_tags(html_entity_decode($topic['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+            $description = trim(wp_strip_all_tags(html_entity_decode($topic['answer'], ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+            if ($title === '') {
+                continue;
+            }
+            $unique_title = $title;
+            if (strpos($normalized, 'document') !== false || strpos($normalized, 'tai lieu') !== false) {
+                $suffix = 2;
+                while (isset($result['documents'][$unique_title])) {
+                    $unique_title = $title . ' (' . $suffix++ . ')';
+                }
+                if (preg_match('#href=("|\')([^"\']+)\1#i', $topic['html'], $link)) {
+                    $result['documents'][$unique_title] = $link[2];
+                } else {
+                    $result['documents'][$unique_title] = $description !== '' ? $description : 'N/A';
+                }
+            } elseif (strpos($normalized, 'feature') !== false || strpos($normalized, 'tinh nang') !== false) {
+                $suffix = 2;
+                while (isset($result['features'][$unique_title])) {
+                    $unique_title = $title . ' (' . $suffix++ . ')';
+                }
+                $result['features'][$unique_title] = $description !== '' ? $description : 'N/A';
+            } else {
+                $suffix = 2;
+                while (isset($result['specs'][$unique_title])) {
+                    $unique_title = $title . ' (' . $suffix++ . ')';
+                }
+                $result['specs'][$unique_title] = $description !== '' ? $description : 'N/A';
+            }
+        }
+    }
+    return $result;
+}
+
+function iristick_sync_original_product_faqs() {
+    if (!function_exists('wc_get_product_id_by_sku') || get_option('iristick_original_faq_sync_v1')) {
+        return;
+    }
+    $sources = array(
+        'IR-G3' => '/tools/Iristick.G3/page.php',
+        'IR-G2-PRO' => '/tools/Iristick.G2-PRO/page.php',
+        'IR-H1' => '/tools/Iristick.H1/page.php',
+        'IR-H3' => '/tools/Iristick.H3/page.php',
+        'IR-COLLECTOR' => '/products/Iristick.Collector/page.php',
+        'IR-TEAMS' => '/products/Iristick.Teams/page.php',
+        'IR-ASSIST' => '/products/Iristick.Assist/page.php',
+    );
+    foreach ($sources as $sku => $relative_file) {
+        $product_id = wc_get_product_id_by_sku($sku);
+        $product = $product_id ? wc_get_product($product_id) : false;
+        if (!$product) {
+            continue;
+        }
+        $faqs = iristick_extract_static_product_faqs(iristick_static_page_root() . $relative_file);
+        $product->update_meta_data('_iristick_faq', $faqs ?: array(
+            array('question' => 'N/A', 'answer' => 'N/A'),
+        ));
+        $product->save_meta_data();
+        wc_delete_product_transients($product_id);
+    }
+    update_option('iristick_original_faq_sync_v1', current_time('mysql'), false);
+}
+add_action('init', 'iristick_sync_original_product_faqs', 23);
+
+function iristick_sync_original_product_sections() {
+    if (!function_exists('wc_get_product_id_by_sku') || get_option('iristick_original_sections_sync_v5')) {
+        return;
+    }
+    $sources = array(
+        'IR-G3' => '/tools/Iristick.G3/page.php', 'IR-G2-PRO' => '/tools/Iristick.G2-PRO/page.php',
+        'IR-H1' => '/tools/Iristick.H1/page.php', 'IR-H3' => '/tools/Iristick.H3/page.php',
+        'IR-COLLECTOR' => '/products/Iristick.Collector/page.php', 'IR-TEAMS' => '/products/Iristick.Teams/page.php',
+        'IR-ASSIST' => '/products/Iristick.Assist/page.php',
+    );
+    foreach ($sources as $sku => $relative_file) {
+        $product_id = wc_get_product_id_by_sku($sku);
+        $product = $product_id ? wc_get_product($product_id) : false;
+        if (!$product) {
+            continue;
+        }
+        $sections = iristick_extract_static_product_sections(iristick_static_page_root() . $relative_file);
+        if ($sections['features']) {
+            $product->update_meta_data('_iristick_features', $sections['features']);
+        }
+        if ($sections['specs']) {
+            $product->update_meta_data('_iristick_specs', $sections['specs']);
+        }
+        if ($sections['documents']) {
+            $product->update_meta_data('_iristick_documents', $sections['documents']);
+        }
+        $product->save_meta_data();
+        wc_delete_product_transients($product_id);
+    }
+    update_option('iristick_original_sections_sync_v5', current_time('mysql'), false);
+}
+add_action('init', 'iristick_sync_original_product_sections', 25);
+
+function iristick_clean_imported_section_label($label, $description, $fallback_number) {
+    $plain_label = strtolower(remove_accents(trim((string) $label)));
+    $plain_description = strtolower(remove_accents(wp_strip_all_tags((string) $description)));
+    if ($plain_label === 'bo & phat') {
+        return 'Cắm và sử dụng';
+    }
+    if (!preg_match('/^(?:name|comment)(?:\s*\(\d+\))?$/', $plain_label)) {
+        return $label;
+    }
+    if (strpos($plain_description, 'toa') !== false || strpos($plain_description, 'don thuoc') !== false || strpos($plain_description, 'prescription') !== false) {
+        return 'Tròng kính theo toa';
+    }
+    if (strpos($plain_description, 'oled') !== false || strpos($plain_description, 'man hinh') !== false) {
+        return 'Màn hình tối ưu';
+    }
+    if (strpos($plain_description, 'ac quy') !== false || strpos($plain_description, 'pin') !== false || strpos($plain_description, 'battery') !== false) {
+        return 'Pin dùng cả ca';
+    }
+    if (strpos($plain_description, 'android') !== false || strpos($plain_description, 'usb-c') !== false || strpos($plain_description, 'dien thoai thong minh') !== false) {
+        return 'Hoạt động bằng điện thoại thông minh';
+    }
+    return 'Thông tin bổ sung ' . $fallback_number;
+}
+
+function iristick_cleanup_imported_product_labels() {
+    if (!function_exists('wc_get_products') || get_option('iristick_clean_product_labels_v1')) {
+        return;
+    }
+    foreach (wc_get_products(array('status' => 'publish', 'limit' => -1)) as $product) {
+        foreach (array('_iristick_features', '_iristick_specs') as $meta_key) {
+            $items = (array) $product->get_meta($meta_key);
+            $clean = array();
+            $number = 1;
+            foreach ($items as $label => $description) {
+                $new_label = iristick_clean_imported_section_label($label, $description, $number++);
+                $unique_label = $new_label;
+                $suffix = 2;
+                while (isset($clean[$unique_label])) {
+                    $unique_label = $new_label . ' (' . $suffix++ . ')';
+                }
+                $clean[$unique_label] = $description;
+            }
+            $product->update_meta_data($meta_key, $clean);
+        }
+        $product->save_meta_data();
+        wc_delete_product_transients($product->get_id());
+    }
+    update_option('iristick_clean_product_labels_v1', current_time('mysql'), false);
+}
+add_action('init', 'iristick_cleanup_imported_product_labels', 26);
+
+function iristick_buy_now_button_text($text) {
+    return 'Mua ngay';
+}
+add_filter('woocommerce_product_single_add_to_cart_text', 'iristick_buy_now_button_text');
+
+/**
+ * One-time database migration: existing prices were entered in EUR. Persist
+ * their VND values in WooCommerce so no run-time conversion is needed.
+ */
+function iristick_migrate_product_prices_to_vnd() {
+    if (!function_exists('wc_get_products') || get_option('iristick_prices_stored_as_vnd_v1')) {
+        return;
+    }
+
+    $product_ids = wc_get_products(array(
+        'status' => array('publish', 'private', 'draft', 'pending'),
+        'limit' => -1,
+        'return' => 'ids',
+    ));
+
+    foreach ($product_ids as $product_id) {
+        $product = wc_get_product($product_id);
+        if (!$product) {
+            continue;
+        }
+
+        $regular_price = $product->get_regular_price('edit');
+        $sale_price = $product->get_sale_price('edit');
+        if ($regular_price !== '') {
+            $product->set_regular_price((float) $regular_price * IRISTICK_EUR_TO_VND_RATE);
+        }
+        if ($sale_price !== '') {
+            $product->set_sale_price((float) $sale_price * IRISTICK_EUR_TO_VND_RATE);
+        }
+        $product->save();
+        wc_delete_product_transients($product_id);
+    }
+
+    update_option('iristick_prices_stored_as_vnd_v1', current_time('mysql'), false);
+}
+add_action('init', 'iristick_migrate_product_prices_to_vnd', 27);
+
+// Direct checkout always purchases one unit, so no quantity selector is shown.
+add_filter('woocommerce_is_sold_individually', '__return_true', 10, 2);
+
+function iristick_buy_now_empty_previous_cart($passed, $product_id, $quantity) {
+    if ($passed && function_exists('WC') && WC()->cart && !WC()->cart->is_empty()) {
+        WC()->cart->empty_cart();
+    }
+    return $passed;
+}
+add_filter('woocommerce_add_to_cart_validation', 'iristick_buy_now_empty_previous_cart', 10, 3);
+
+function iristick_buy_now_checkout_redirect($url) {
+    return function_exists('wc_get_checkout_url') ? wc_get_checkout_url() : $url;
+}
+add_filter('woocommerce_add_to_cart_redirect', 'iristick_buy_now_checkout_redirect');
+
+function iristick_disable_cart_page() {
+    if (!function_exists('is_cart') || !is_cart()) {
+        return;
+    }
+
+    $destination = function_exists('WC') && WC()->cart && !WC()->cart->is_empty()
+        ? wc_get_checkout_url()
+        : home_url('/');
+    wp_safe_redirect($destination);
+    exit;
+}
+add_action('template_redirect', 'iristick_disable_cart_page', 1);
+
+// Remove cart-only UI and background refreshes; checkout still uses the
+// WooCommerce session populated by the direct "Mua ngay" action.
+add_filter('woocommerce_add_to_cart_message_html', '__return_empty_string');
+add_filter('wc_add_to_cart_message_html', '__return_empty_string');
+add_filter('woocommerce_widget_cart_is_hidden', '__return_true');
+add_action('wp_enqueue_scripts', function () {
+    wp_dequeue_script('wc-cart-fragments');
+    wp_deregister_script('wc-cart-fragments');
+}, 100);
+
+function iristick_handle_phone_consultation() {
+    $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
+    $fallback_url = $product_id ? get_permalink($product_id) : home_url('/');
+
+    if (!isset($_POST['iristick_phone_nonce'])
+        || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['iristick_phone_nonce'])), 'iristick_phone_consultation')) {
+        wp_safe_redirect(add_query_arg('phone_status', 'error', $fallback_url));
+        exit;
+    }
+
+    $phone = isset($_POST['phone']) ? iristick_normalize_vietnam_phone(sanitize_text_field(wp_unslash($_POST['phone']))) : '';
+    if (!preg_match('/^0(?:3|5|7|8|9)[0-9]{8}$/', $phone)) {
+        wp_safe_redirect(add_query_arg('phone_status', 'error', $fallback_url));
+        exit;
+    }
+
+    $product = function_exists('wc_get_product') ? wc_get_product($product_id) : false;
+    $product_name = $product ? $product->get_name() : 'N/A';
+    $recipient = get_option('admin_email');
+    $subject = '[Iristick Việt Nam] Yêu cầu tư vấn qua điện thoại';
+    $message = implode("\n", array(
+        'Số điện thoại: ' . $phone,
+        'Sản phẩm quan tâm: ' . $product_name,
+        'Trang sản phẩm: ' . $fallback_url,
+        'Thời gian: ' . current_time('d/m/Y H:i:s'),
+    ));
+    $sent = wp_mail($recipient, $subject, $message);
+
+    wp_safe_redirect(add_query_arg('phone_status', $sent ? 'success' : 'error', $fallback_url));
+    exit;
+}
+add_action('admin_post_nopriv_iristick_phone_consultation', 'iristick_handle_phone_consultation');
+add_action('admin_post_iristick_phone_consultation', 'iristick_handle_phone_consultation');
+
+/**
+ * Use the controllable classic checkout instead of the Checkout Block so the
+ * Vietnam form stays compact and has only one required field: phone number.
+ */
+function iristick_use_simple_checkout($content) {
+    if (function_exists('is_checkout') && is_checkout()
+        && !is_wc_endpoint_url('order-received') && is_main_query() && in_the_loop()) {
+        return do_shortcode('[woocommerce_checkout]');
+    }
+    return $content;
+}
+add_filter('the_content', 'iristick_use_simple_checkout', 1);
+
+function iristick_simple_checkout_fields($fields) {
+    if (!isset($fields['billing'])) {
+        return $fields;
+    }
+
+    foreach ($fields['billing'] as &$field) {
+        $field['required'] = false;
+    }
+    unset($field);
+
+    $allowed_billing_fields = array('billing_phone', 'billing_email', 'billing_first_name', 'billing_address_1');
+    foreach (array_keys($fields['billing']) as $field_key) {
+        if (!in_array($field_key, $allowed_billing_fields, true)) {
+            unset($fields['billing'][$field_key]);
+        }
+    }
+
+    $labels = array(
+        'billing_first_name' => array('Họ và tên', 'Nhập họ và tên'),
+        'billing_phone' => array('Số điện thoại', 'Nhập số điện thoại'),
+        'billing_email' => array('Email', 'Nhập email (không bắt buộc)'),
+        'billing_address_1' => array('Địa chỉ', 'Nhập địa chỉ (không bắt buộc)'),
+    );
+    foreach ($labels as $field_key => $copy) {
+        if (isset($fields['billing'][$field_key])) {
+            $fields['billing'][$field_key]['label'] = $copy[0];
+            $fields['billing'][$field_key]['placeholder'] = $copy[1];
+        }
+    }
+
+    if (isset($fields['billing']['billing_phone'])) {
+        $fields['billing']['billing_phone']['required'] = true;
+        $fields['billing']['billing_phone']['priority'] = 10;
+        $fields['billing']['billing_phone']['class'] = array('form-row-wide');
+        $fields['billing']['billing_phone']['type'] = 'tel';
+        $fields['billing']['billing_phone']['placeholder'] = 'Ví dụ: 0917834532';
+        $fields['billing']['billing_phone']['custom_attributes'] = array(
+            'inputmode' => 'numeric',
+            'autocomplete' => 'tel',
+            'pattern' => '(?:\\+84|0)(?:3|5|7|8|9)[0-9]{8}',
+            'minlength' => '10',
+            'maxlength' => '12',
+            'title' => 'Nhập số di động Việt Nam, ví dụ 0917834532 hoặc +84917834532',
+        );
+    }
+    if (isset($fields['billing']['billing_first_name'])) {
+        $fields['billing']['billing_first_name']['priority'] = 20;
+        $fields['billing']['billing_first_name']['class'] = array('form-row-wide');
+    }
+    if (isset($fields['billing']['billing_email'])) {
+        $fields['billing']['billing_email']['priority'] = 30;
+        $fields['billing']['billing_email']['class'] = array('form-row-wide');
+    }
+
+    $fields['shipping'] = array();
+    if (isset($fields['order']['order_comments'])) {
+        $fields['order']['order_comments']['label'] = 'Ghi chú';
+        $fields['order']['order_comments']['placeholder'] = 'Ghi chú thêm (không bắt buộc)';
+        $fields['order']['order_comments']['required'] = false;
+    }
+
+    return $fields;
+}
+add_filter('woocommerce_checkout_fields', 'iristick_simple_checkout_fields', 20);
+add_filter('woocommerce_order_button_text', function () {
+    return 'Đặt hàng';
+});
+add_filter('woocommerce_thankyou_order_received_text', function ($text, $order) {
+    return '<strong>Đặt hàng thành công!</strong><br>Cảm ơn bạn. Iristick Việt Nam đã nhận đơn hàng và sẽ sớm liên hệ để xác nhận.';
+}, 20, 2);
+add_filter('woocommerce_enable_order_notes_field', '__return_true');
+add_filter('woocommerce_cart_needs_shipping_address', '__return_false');
+
+function iristick_normalize_vietnam_phone($phone) {
+    $phone = preg_replace('/[\s.()-]+/', '', (string) $phone);
+    if (strpos($phone, '+84') === 0) {
+        $phone = '0' . substr($phone, 3);
+    } elseif (strpos($phone, '84') === 0 && strlen($phone) === 11) {
+        $phone = '0' . substr($phone, 2);
+    }
+    return $phone;
+}
+
+add_filter('woocommerce_checkout_posted_data', function ($data) {
+    if (isset($data['billing_phone'])) {
+        $data['billing_phone'] = iristick_normalize_vietnam_phone($data['billing_phone']);
+    }
+    return $data;
+});
+
+add_action('woocommerce_checkout_process', function () {
+    $phone = isset($_POST['billing_phone'])
+        ? iristick_normalize_vietnam_phone(sanitize_text_field(wp_unslash($_POST['billing_phone'])))
+        : '';
+    if (!preg_match('/^0(?:3|5|7|8|9)[0-9]{8}$/', $phone)) {
+        wc_add_notice('Vui lòng nhập đúng số di động Việt Nam (ví dụ: 0917834532).', 'error');
+    }
+});
+
+/**
+ * Offline confirmation gateway: creates a real WooCommerce order without
+ * requiring an online payment provider. The consultant confirms it by phone.
+ */
+function iristick_register_phone_confirmation_gateway() {
+    if (!class_exists('WC_Payment_Gateway') || class_exists('WC_Gateway_Iristick_Phone')) {
+        return;
+    }
+
+    class WC_Gateway_Iristick_Phone extends WC_Payment_Gateway {
+        public function __construct() {
+            $this->id = 'iristick_phone_confirmation';
+            $this->method_title = 'Thanh toán khi nhận hàng';
+            $this->method_description = 'Khách hàng thanh toán khi nhận hàng.';
+            $this->has_fields = false;
+            $this->enabled = 'yes';
+            $this->title = 'Thanh toán khi nhận hàng';
+            $this->description = '';
+            $this->supports = array('products');
+        }
+
+        public function process_payment($order_id) {
+            $order = wc_get_order($order_id);
+            if (!$order) {
+                return array('result' => 'failure');
+            }
+
+            $order->update_status('on-hold', 'Đơn hàng thanh toán khi nhận hàng.');
+            wc_reduce_stock_levels($order_id);
+            if (WC()->cart) {
+                WC()->cart->empty_cart();
+            }
+
+            return array(
+                'result' => 'success',
+                'redirect' => $this->get_return_url($order),
+            );
+        }
+    }
+}
+add_action('init', 'iristick_register_phone_confirmation_gateway', 5);
+add_filter('woocommerce_payment_gateways', function ($gateways) {
+    $gateways[] = 'WC_Gateway_Iristick_Phone';
+    return $gateways;
+});
+
+/* Iristick Vietnam branding for WooCommerce order emails. */
+add_filter('woocommerce_email_from_name', function () {
+    return 'Iristick Việt Nam';
+});
+add_filter('woocommerce_email_header_image', '__return_empty_string');
+
+add_filter('woocommerce_email_order_items_args', function ($args) {
+    $args['show_image'] = false;
+    return $args;
+});
+
+function iristick_branded_email_heading($title) {
+    return 'Iristick Việt Nam — ' . wp_strip_all_tags($title);
+}
+add_filter('woocommerce_email_heading_new_order', function () {
+    return iristick_branded_email_heading('Đơn hàng mới');
+});
+add_filter('woocommerce_email_heading_customer_on_hold_order', function () {
+    return iristick_branded_email_heading('Chúng tôi đã nhận đơn hàng');
+});
+add_filter('woocommerce_email_heading_customer_processing_order', function () {
+    return iristick_branded_email_heading('Đơn hàng đang được xử lý');
+});
+add_filter('woocommerce_email_heading_customer_completed_order', function () {
+    return iristick_branded_email_heading('Đơn hàng đã hoàn tất');
+});
+add_filter('woocommerce_email_heading_customer_invoice', function () {
+    return iristick_branded_email_heading('Thông tin đơn hàng');
+});
+
+add_filter('woocommerce_email_subject_new_order', function ($subject, $order) {
+    return '[Iristick Việt Nam] Đơn hàng mới #' . $order->get_order_number();
+}, 20, 2);
+add_filter('woocommerce_email_subject_customer_on_hold_order', function ($subject, $order) {
+    return 'Iristick Việt Nam đã nhận đơn hàng #' . $order->get_order_number();
+}, 20, 2);
+add_filter('woocommerce_email_subject_customer_processing_order', function ($subject, $order) {
+    return 'Đơn hàng #' . $order->get_order_number() . ' đang được xử lý | Iristick Việt Nam';
+}, 20, 2);
+add_filter('woocommerce_email_subject_customer_completed_order', function ($subject, $order) {
+    return 'Đơn hàng #' . $order->get_order_number() . ' đã hoàn tất | Iristick Việt Nam';
+}, 20, 2);
+
+add_filter('woocommerce_email_footer_text', function () {
+    return '<strong>Iristick Việt Nam</strong><br>Cảm ơn bạn đã tin tưởng và lựa chọn sản phẩm của chúng tôi.';
+});
+
+add_filter('woocommerce_email_styles', function ($css) {
+    $css .= '\n
+        body { background-color:#f4f3f8 !important; color:#19191c !important; }
+        #wrapper { background-color:#f4f3f8 !important; padding:34px 12px !important; }
+        #template_container { border:0 !important; border-radius:22px !important; overflow:hidden !important; box-shadow:0 16px 45px rgba(32,27,55,.10) !important; }
+        #template_header { background:#19191c !important; border:0 !important; }
+        #template_header h1 { padding:30px 34px !important; color:#fff !important; font-size:25px !important; line-height:1.35 !important; }
+        .iristick-email-brand { color:#fff !important; font-size:28px !important; font-weight:700 !important; letter-spacing:-.02em !important; }
+        .iristick-email-title { color:#c9c2ff !important; font-size:15px !important; font-weight:500 !important; }
+        #template_body td, #template_body th { color:#2b2930 !important; font-size:15px !important; line-height:1.65 !important; }
+        #body_content { padding:0 !important; }
+        #body_content_inner { padding:34px !important; }
+        h2, h3 { color:#19191c !important; }
+        table.td { border:1px solid #e2dfec !important; border-radius:12px !important; overflow:hidden !important; }
+        table.td th { background:#f2f0fa !important; color:#19191c !important; font-weight:700 !important; }
+        table.td th, table.td td { border-color:#e2dfec !important; padding:13px !important; }
+        .product-image, img.attachment-thumbnail { display:none !important; }
+        a { color:#6557df !important; }
+        #template_footer { background:#faf9fc !important; }
+        #template_footer td { padding:22px 34px !important; color:#74717c !important; font-size:13px !important; line-height:1.6 !important; }
+        @media only screen and (max-width:620px) {
+            #wrapper { padding:10px 4px !important; }
+            #body_content_inner, #template_header h1 { padding:22px !important; }
+            .iristick-email-brand { font-size:24px !important; }
+            table.td th, table.td td { padding:9px !important; font-size:13px !important; }
+        }
+    ';
+    return $css;
+});
+
+add_action('woocommerce_before_checkout_form', function () {
+    if (!wp_doing_ajax() && function_exists('wc_clear_notices')) {
+        wc_clear_notices();
+    }
+}, 1);
+
+function iristick_checkout_vietnamese_text($translated, $original, $domain) {
+    $copy = array(
+        'Checkout' => 'Thanh toán',
+        'Billing details' => 'Thông tin liên hệ',
+        'Additional information' => 'Ghi chú',
+        'Your order' => 'Đơn hàng của bạn',
+        'Product' => 'Sản phẩm',
+        'Subtotal' => 'Tạm tính',
+        'Total' => 'Tổng cộng',
+        'Place order' => 'Đặt hàng',
+        'optional' => 'không bắt buộc',
+        'Order' => 'Đơn hàng',
+        'Order received' => 'Đặt hàng thành công',
+        'Thank you. Your order has been received.' => 'Cảm ơn bạn. Iristick Việt Nam đã nhận đơn hàng.',
+        'New order' => 'Đơn hàng mới',
+        'New order: #%s' => 'Đơn hàng mới: #%s',
+        'Order summary' => 'Chi tiết đơn hàng',
+        'Order details' => 'Chi tiết đơn hàng',
+        'Order #%s' => 'Đơn hàng #%s',
+        'Order #%1$s (%2$s)' => 'Đơn hàng #%1$s (%2$s)',
+        'Order number:' => 'Mã đơn hàng:',
+        'Order number' => 'Mã đơn hàng',
+        'Date:' => 'Ngày đặt:',
+        'Date' => 'Ngày đặt',
+        'Email:' => 'Email:',
+        'Total:' => 'Tổng cộng:',
+        'Payment method:' => 'Phương thức thanh toán:',
+        'Payment method:' => 'Phương thức thanh toán:',
+        'Quantity' => 'Số lượng',
+        'Price' => 'Thành tiền',
+        'Subtotal:' => 'Tạm tính:',
+        'Total:' => 'Tổng cộng:',
+        'Payment method:' => 'Phương thức thanh toán:',
+        'Billing address' => 'Thông tin khách hàng',
+        'Shipping address' => 'Địa chỉ giao hàng',
+        'Customer note' => 'Ghi chú của khách hàng',
+        'Email' => 'Email',
+        'Phone' => 'Số điện thoại',
+        'Download' => 'Tải xuống',
+        'Expires' => 'Hết hạn',
+        'Thanks for reading.' => 'Cảm ơn bạn đã đọc email.',
+        'Thanks for using %s!' => 'Cảm ơn bạn đã lựa chọn %s!',
+        'We look forward to fulfilling your order soon.' => 'Chúng tôi sẽ sớm liên hệ và xử lý đơn hàng của bạn.',
+        'Your order is on-hold until we confirm payment has been received. In the meantime, here\'s a reminder of what you ordered:' => 'Đơn hàng của bạn đã được tiếp nhận và đang chờ xử lý. Dưới đây là thông tin đơn hàng:',
+        'Hi %s,' => 'Xin chào %s,',
+        'You\'ve received the following order from %s:' => 'Bạn vừa nhận đơn hàng mới từ %s:',
+        'You\'ve received a new order from %s. Their order is as follows:' => 'Bạn vừa nhận đơn hàng mới từ %s. Chi tiết đơn hàng như sau:',
+        'You’ve received the following order from %s:' => 'Bạn vừa nhận đơn hàng mới từ %s:',
+        'You’ve received a new order from %s. Their order is as follows:' => 'Bạn vừa nhận đơn hàng mới từ %s. Chi tiết đơn hàng như sau:',
+        'Just to let you know — we\'ve received your order #%s, and it is now being processed:' => 'Chúng tôi đã nhận đơn hàng #%s và đang tiến hành xử lý:',
+        'Thanks for your order. It’s on-hold until we confirm that payment has been received.' => 'Cảm ơn bạn đã đặt hàng. Đơn hàng hiện đang chờ được xử lý.',
+        'We have finished processing your order.' => 'Đơn hàng của bạn đã được xử lý hoàn tất.',
+        'Congratulations on the sale!' => 'Chúc mừng bạn có đơn hàng mới!',
+        'Process your orders on the go.' => 'Quản lý và xử lý đơn hàng mọi lúc, mọi nơi.',
+        'Get the app.' => 'Tải ứng dụng.',
+        'Manage your orders on the go. Get the app.' => 'Quản lý đơn hàng mọi lúc, mọi nơi. Tải ứng dụng.',
+        'Process your orders on the go. Get the app.' => 'Xử lý đơn hàng mọi lúc, mọi nơi. Tải ứng dụng.',
+    );
+    return isset($copy[$original]) ? $copy[$original] : $translated;
+}
+add_filter('gettext', 'iristick_checkout_vietnamese_text', 20, 3);
+
+add_filter('the_title', function ($title, $post_id) {
+    if (function_exists('is_checkout') && is_checkout() && in_the_loop() && is_main_query()) {
+        return function_exists('is_order_received_page') && is_order_received_page()
+            ? 'Đặt hàng thành công'
+            : 'Thanh toán';
+    }
+    return $title;
+}, 20, 2);
+
+function iristick_product_admin_columns($columns) {
+    $columns['iristick_sync'] = 'Dữ liệu Iristick';
+    return $columns;
+}
+add_filter('manage_edit-product_columns', 'iristick_product_admin_columns', 30);
+
+function iristick_product_admin_column_content($column, $post_id) {
+    if ($column !== 'iristick_sync') {
+        return;
+    }
+    $product = wc_get_product($post_id);
+    if (!$product) {
+        echo 'Chưa đồng bộ';
+        return;
+    }
+    $checks = array(
+        $product->get_sku(),
+        $product->get_short_description(),
+        $product->get_description(),
+        $product->get_meta('_iristick_media_type'),
+        $product->get_meta('_iristick_media_url'),
+        $product->get_meta('_iristick_features'),
+        $product->get_meta('_iristick_specs'),
+        $product->get_meta('_iristick_documents'),
+        $product->get_meta('_iristick_faq'),
+    );
+    $complete = count(array_filter($checks, function ($value) {
+        return $value !== '' && $value !== array();
+    }));
+    echo $complete === count($checks)
+        ? '<strong style="color:#16803c">Đã đồng bộ</strong><br><small>' . esc_html($complete . '/' . count($checks)) . ' nhóm dữ liệu</small>'
+        : '<strong style="color:#b32d2e">Thiếu dữ liệu</strong><br><small>' . esc_html($complete . '/' . count($checks)) . ' nhóm dữ liệu</small>';
+}
+add_action('manage_product_posts_custom_column', 'iristick_product_admin_column_content', 10, 2);
+
+
+function iristick_add_product_data_meta_box() {
+    add_meta_box(
+        'iristick-product-data',
+        'Thông tin sản phẩm Iristick',
+        'iristick_render_product_data_meta_box',
+        'product',
+        'normal',
+        'high'
+    );
+}
+add_action('add_meta_boxes_product', 'iristick_add_product_data_meta_box');
+
+function iristick_meta_lines($value, $separator = ' | ') {
+    if (!is_array($value)) {
+        return '';
+    }
+    $lines = array();
+    foreach ($value as $key => $item) {
+        if (is_array($item)) {
+            $left = isset($item['question']) ? $item['question'] : '';
+            $right = isset($item['answer']) ? $item['answer'] : '';
+            $lines[] = $left . $separator . $right;
+        } elseif (is_string($key)) {
+            $lines[] = $key . $separator . $item;
+        } else {
+            $lines[] = $item;
+        }
+    }
+    return implode("\n", $lines);
+}
+
+function iristick_render_product_data_meta_box($post) {
+    $product = wc_get_product($post->ID);
+    if (!$product) {
+        return;
+    }
+    wp_nonce_field('iristick_save_product_data', 'iristick_product_data_nonce');
+    $media_type = $product->get_meta('_iristick_media_type');
+    ?>
+    <style>
+        .iristick-admin-fields{display:grid;grid-template-columns:180px 1fr;gap:14px 18px;align-items:start}.iristick-admin-fields label{font-weight:600;padding-top:8px}.iristick-admin-fields input,.iristick-admin-fields select,.iristick-admin-fields textarea{width:100%;max-width:none}.iristick-admin-fields small{display:block;margin-top:5px;color:#646970}@media(max-width:782px){.iristick-admin-fields{grid-template-columns:1fr;gap:7px}.iristick-admin-fields label{padding-top:6px}}
+    </style>
+    <div class="iristick-admin-fields">
+        <label for="iristick_media_type">Loại media</label>
+        <div><select id="iristick_media_type" name="iristick_media_type"><option value="N/A" <?php selected($media_type, 'N/A'); ?>>N/A</option><option value="image" <?php selected($media_type, 'image'); ?>>Ảnh</option><option value="video" <?php selected($media_type, 'video'); ?>>Video</option></select></div>
+
+        <label for="iristick_media_url">Media chính</label>
+        <div><input id="iristick_media_url" name="iristick_media_url" type="text" value="<?php echo esc_attr($product->get_meta('_iristick_media_url')); ?>" placeholder="URL ảnh hoặc video"><small>Dán URL ảnh/video hoặc chọn ảnh đại diện trong khối “Ảnh sản phẩm” của WooCommerce.</small></div>
+
+        <label for="iristick_features">Tính năng chính</label>
+        <div><textarea id="iristick_features" name="iristick_features" rows="6"><?php echo esc_textarea(iristick_meta_lines($product->get_meta('_iristick_features'))); ?></textarea><small>Mỗi dòng: Tên tính năng | Mô tả.</small></div>
+
+        <label for="iristick_specs">Thông số và phụ kiện</label>
+        <div><textarea id="iristick_specs" name="iristick_specs" rows="7"><?php echo esc_textarea(iristick_meta_lines($product->get_meta('_iristick_specs'))); ?></textarea><small>Mỗi dòng: Tên thông số | Giá trị.</small></div>
+
+        <label for="iristick_documents">Tài liệu PDF</label>
+        <div><textarea id="iristick_documents" name="iristick_documents" rows="5"><?php echo esc_textarea(iristick_meta_lines($product->get_meta('_iristick_documents'))); ?></textarea><small>Mỗi dòng: Tên tài liệu | URL.</small></div>
+
+        <label for="iristick_faq">FAQ</label>
+        <div><textarea id="iristick_faq" name="iristick_faq" rows="7"><?php echo esc_textarea(iristick_meta_lines($product->get_meta('_iristick_faq'))); ?></textarea><small>Mỗi dòng: Câu hỏi | Câu trả lời.</small></div>
+    </div>
+    <?php
+}
+
+function iristick_parse_product_meta_lines($raw, $mode) {
+    $result = array();
+    foreach (preg_split('/\r\n|\r|\n/', (string) $raw) as $line) {
+        $line = trim($line);
+        if ($line === '') {
+            continue;
+        }
+        if ($mode === 'list') {
+            $result[] = sanitize_text_field($line);
+            continue;
+        }
+        $parts = array_map('trim', explode('|', $line, 2));
+        $left = sanitize_text_field($parts[0]);
+        $right = isset($parts[1]) && $parts[1] !== '' ? $parts[1] : 'N/A';
+        if ($mode === 'faq') {
+            $result[] = array('question' => $left, 'answer' => sanitize_textarea_field($right));
+        } elseif ($mode === 'documents') {
+            $result[$left] = $right === 'N/A' ? 'N/A' : esc_url_raw($right);
+        } else {
+            $result[$left] = sanitize_text_field($right);
+        }
+    }
+    return $result;
+}
+
+function iristick_save_product_data_meta_box($post_id) {
+    if (!isset($_POST['iristick_product_data_nonce'])
+        || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['iristick_product_data_nonce'])), 'iristick_save_product_data')
+        || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
+        || !current_user_can('edit_post', $post_id)) {
+        return;
+    }
+    $product = wc_get_product($post_id);
+    if (!$product) {
+        return;
+    }
+    $media_type = isset($_POST['iristick_media_type']) ? sanitize_key(wp_unslash($_POST['iristick_media_type'])) : 'N/A';
+    $product->update_meta_data('_iristick_media_type', in_array($media_type, array('image', 'video'), true) ? $media_type : 'N/A');
+    $product->update_meta_data('_iristick_media_url', isset($_POST['iristick_media_url']) ? esc_url_raw(wp_unslash($_POST['iristick_media_url'])) : 'N/A');
+    $product->update_meta_data('_iristick_features', iristick_parse_product_meta_lines(isset($_POST['iristick_features']) ? wp_unslash($_POST['iristick_features']) : '', 'specs'));
+    $product->update_meta_data('_iristick_specs', iristick_parse_product_meta_lines(isset($_POST['iristick_specs']) ? wp_unslash($_POST['iristick_specs']) : '', 'specs'));
+    $product->update_meta_data('_iristick_documents', iristick_parse_product_meta_lines(isset($_POST['iristick_documents']) ? wp_unslash($_POST['iristick_documents']) : '', 'documents'));
+    $product->update_meta_data('_iristick_faq', iristick_parse_product_meta_lines(isset($_POST['iristick_faq']) ? wp_unslash($_POST['iristick_faq']) : '', 'faq'));
+    $product->save_meta_data();
+}
+add_action('save_post_product', 'iristick_save_product_data_meta_box', 20);
+
+function iristick_product_document_title_parts($parts) {
+    if (function_exists('is_product') && is_product()) {
+        $parts['title'] = single_post_title('', false);
+        $parts['site'] = 'Iristick Việt Nam';
+        unset($parts['tagline'], $parts['page']);
+    }
+    return $parts;
+}
+add_filter('document_title_parts', 'iristick_product_document_title_parts');
+add_filter('pre_get_document_title', function ($title) {
+    if (function_exists('is_product') && is_product()) {
+        return single_post_title('', false) . ' | Iristick Việt Nam';
+    }
+    return $title;
+});
+add_filter('document_title_separator', function ($separator) {
+    return function_exists('is_product') && is_product() ? '|' : $separator;
+});
+
+function iristick_woocommerce_header_items($category_slug) {
+    if (!function_exists('wc_get_products')) {
+        return '';
+    }
+    $products = wc_get_products(array('status' => 'publish', 'limit' => -1, 'category' => array($category_slug), 'orderby' => 'menu_order', 'order' => 'ASC'));
+    $items = '';
+    foreach ($products as $product) {
+        $summary = trim(wp_strip_all_tags($product->get_short_description()));
+        $full_summary = $summary !== '' ? $summary : 'N/A';
+        $menu_summary = wp_trim_words($full_summary, 10, '…');
+        $items .= '<a class="iristick-wc-menu-product" href="' . esc_url($product->get_permalink()) . '"><div class="dropdown-topic svelte-1wxfnil"><div class="svelte-1wxfnil">' . esc_html($product->get_name()) . '</div><span class="svelte-1wxfnil" title="' . esc_attr($full_summary) . '">' . esc_html($menu_summary) . '</span></div></a>';
+    }
+    return $items;
+}
+
+function iristick_existing_product_page_path($product) {
+    if (!$product instanceof WC_Product) {
+        return '';
+    }
+    $paths = array(
+        'IR-G3' => '/tools/Iristick.G3/',
+        'IR-G2-PRO' => '/tools/Iristick.G2-PRO/',
+        'IR-H1' => '/tools/Iristick.H1/',
+        'IR-H3' => '/tools/Iristick.H3/',
+        'IR-COLLECTOR' => '/products/Iristick.Collector/',
+        'IR-TEAMS' => '/products/Iristick.Teams/',
+        'IR-ASSIST' => '/products/Iristick.Assist/',
+    );
+    $sku = $product->get_sku();
+    return isset($paths[$sku]) ? $paths[$sku] : '';
+}
+
+function iristick_existing_product_template_file() {
+    if (!function_exists('is_product') || !is_product()) {
+        return false;
+    }
+    $product = wc_get_product(get_queried_object_id());
+    $path = iristick_existing_product_page_path($product);
+    if ($path === '') {
+        return false;
+    }
+    $file = iristick_static_page_root() . str_replace('/', DIRECTORY_SEPARATOR, $path) . 'page.php';
+    return is_file($file) ? $file : false;
+}
+
+function iristick_existing_product_template_include($template) {
+    return iristick_existing_product_template_file()
+        ? IRISTICK_STATIC_DIR . '/existing-product.php'
+        : $template;
+}
+
+function iristick_inject_woocommerce_header($html) {
+    // Correct machine-translated copy in the Teams industry cards.
+    $html = strtr($html, array(
+        'Hợp tác quan sát thực địa với đồng nghiệp <span class="bold">Nông nghiệp</span>.' => 'Phối hợp quan sát thực địa cùng đồng nghiệp trong lĩnh vực <span class="bold">Nông nghiệp</span>.',
+        'Chẩn đoán và giải quyết vấn đề tài sản với trợ giúp chuyên gia <span class="bold">Ngành công nghiệp tiện ích</span>.' => 'Chẩn đoán và xử lý sự cố thiết bị với sự hỗ trợ của chuyên gia trong <span class="bold">Ngành tiện ích</span>.',
+        'Giải quyết vấn đề môi trường, sức khỏe và an toàn trong <span class="bold">quá trình công nghiệp</span>.' => 'Giải quyết các vấn đề về môi trường, sức khỏe và an toàn trong <span class="bold">Sản xuất công nghiệp</span>.',
+        'Name <span class="bold">Y tế</span>.' => 'Hỗ trợ chăm sóc và tư vấn từ xa trong lĩnh vực <span class="bold">Y tế</span>.',
+        'Tọa độ các vấn đề với các nhóm từ xa ở yên tại <span class="bold">Công trình xây dựng và kỹ thuật</span>.' => 'Phối hợp xử lý sự cố với các nhóm từ xa ngay tại <span class="bold">Công trường xây dựng và kỹ thuật</span>.',
+        'Thi hành ngay lập tức, đánh giá thiệt hại chính xác với các chuyên gia không chính thức bởi <span class="bold">Công ty bảo hiểm</span>.' => 'Thực hiện đánh giá thiệt hại nhanh chóng, chính xác cùng chuyên gia trong <span class="bold">Ngành bảo hiểm</span>.',
+        'Giải quyết vấn đề trong <span class="bold">Công trình xây dựng và kỹ thuật</span>.' => 'Giải quyết sự cố tại <span class="bold">Công trình xây dựng và kỹ thuật</span>.',
+        'Hỗ trợ chuyên gia ngay lập tức cho thất bại tài sản <span class="bold">Tiện ích và năng lượng</span>.' => 'Hỗ trợ chuyên gia tức thời khi xảy ra sự cố tài sản trong ngành <span class="bold">Tiện ích và năng lượng</span>.',
+        'Giám sát từ xa trong khi thực hiện kiểm tra <span class="bold">quá trình công nghiệp</span>.' => 'Giám sát từ xa trong quá trình kiểm tra <span class="bold">Sản xuất công nghiệp</span>.',
+        'Sống theo hướng dẫn để phân phát <span class="bold">Y tế</span> Các đội.' => 'Hướng dẫn trực tiếp cho các đội ngũ trong lĩnh vực <span class="bold">Y tế</span>.',
+        'Name <span class="bold">Sản xuất</span>.' => 'Hỗ trợ xử lý sự cố từ xa trong hoạt động <span class="bold">Sản xuất</span>.',
+        'Hỗ trợ sau quảng cáo mà không cần thăm nơi Mạng <span class="bold">Nhà cung cấp thiết bị</span>.' => 'Hỗ trợ hậu mãi từ xa, không cần đến tận nơi, dành cho <span class="bold">Nhà cung cấp thiết bị</span>.',
+    ));
+
+    // Hardware glasses are products; Collector, Teams and Assist are tools.
+    $html = preg_replace(
+        '#(<h4\b[^>]*>\s*<span\b[^>]*>robot</span>\s*)CÔNG CỤ(\s*</h4>)#iu',
+        '$1SẢN PHẨM$2',
+        $html
+    );
+    $html = preg_replace(
+        '#(<h4\b[^>]*>\s*<span\b[^>]*>devices</span>\s*)SẢN PHẨM(\s*</h4>)#iu',
+        '$1CÔNG CỤ$2',
+        $html
+    );
+
+    $product_items = iristick_woocommerce_header_items('san-pham');
+    if ($product_items !== '') {
+        $html = preg_replace(
+            '#(<h4\b[^>]*>\s*<span\b[^>]*>robot</span>\s*SẢN PHẨM\s*</h4>)#iu',
+            '$1' . $product_items,
+            $html
+        );
+    }
+    // This storefront uses a direct "Mua ngay" checkout flow and has no cart UI.
+    $html = preg_replace('#<div class="shoplink\b[^>]*>.*?</div>#is', '', $html);
+    return $html;
+}
 
 /**
  * Static snapshots do not use the WooCommerce front-end runtime. Loading it on
@@ -264,6 +1394,9 @@ function iristick_static_render($file) {
     }
 
     // Remove SvelteKit preload links and every Svelte hydration/boot script.
+    // Snapshot pages contain their own legacy favicon.ico. Remove every saved
+    // icon declaration so the single WordPress favicon below applies globally.
+    $html = preg_replace('#<link\b[^>]*rel=["\'][^"\']*(?:icon|apple-touch-icon)[^"\']*["\'][^>]*>\s*#i', '', $html);
     $html = preg_replace('#<link\b[^>]*rel=["\']modulepreload["\'][^>]*>\s*#i', '', $html);
     $html = preg_replace('#<script\b[^>]*src=["\'][^"\']*(?:_app/immutable|script\.js)[^"\']*["\'][^>]*>\s*</script>#is', '', $html);
     $html = preg_replace('#<script\b[^>]*>(?:(?!</script>).)*(?:__sveltekit_|kit\.start\s*\(|client\.crisp\.chat)(?:(?!</script>).)*</script>#is', '', $html);
@@ -321,6 +1454,7 @@ function iristick_static_render($file) {
         },
         $html
     );
+    $html = iristick_inject_woocommerce_header($html);
 
     // Let WordPress/plugins add their required head and footer output.
     ob_start();
@@ -382,20 +1516,36 @@ function iristick_handle_demo_request() {
         ? sanitize_email(IRISTICK_DEMO_EMAIL)
         : sanitize_email(get_option('admin_email'));
     $recipient = apply_filters('iristick_demo_recipient_email', $default_recipient);
-    $subject = sprintf('[Iristick] Yêu cầu đặt lịch demo từ %s', $name);
-    $message = implode("\n", array(
-        'Có một yêu cầu đặt lịch demo mới:',
-        '',
-        'Họ và tên: ' . $name,
-        'Email: ' . $email,
-        'Ngành nghề: ' . ($industry ?: 'Không cung cấp'),
-        'Quy mô công ty: ' . ($company_size ?: 'Không cung cấp'),
-        'Giải pháp quan tâm: ' . $solution,
-        '',
-        'Câu hỏi / nội dung muốn trao đổi:',
-        $questions ?: 'Không cung cấp',
-    ));
-    $headers = array('Reply-To: ' . $name . ' <' . $email . '>');
+    $subject = sprintf('[Iristick Việt Nam] Yêu cầu đặt lịch demo từ %s', $name);
+    $rows = array(
+        'Họ và tên' => $name,
+        'Email' => $email,
+        'Ngành nghề' => $industry ?: 'Không cung cấp',
+        'Quy mô công ty' => $company_size ?: 'Không cung cấp',
+        'Giải pháp quan tâm' => $solution,
+    );
+    $table_rows = '';
+    foreach ($rows as $label => $value) {
+        $table_rows .= '<tr><th style="width:38%;padding:12px 14px;text-align:left;border-bottom:1px solid #e6e3ef;background:#f5f3fb;color:#27242d;font-size:14px;">'
+            . esc_html($label)
+            . '</th><td style="padding:12px 14px;border-bottom:1px solid #e6e3ef;color:#3d3944;font-size:14px;">'
+            . esc_html($value)
+            . '</td></tr>';
+    }
+    $message = '<!doctype html><html lang="vi"><body style="margin:0;padding:0;background:#f4f3f8;font-family:Arial,sans-serif;color:#19191c;">'
+        . '<div style="padding:32px 12px;"><div style="max-width:640px;margin:0 auto;overflow:hidden;border-radius:20px;background:#fff;box-shadow:0 14px 38px rgba(30,25,48,.1);">'
+        . '<div style="padding:28px 32px;background:#19191c;color:#fff;"><div style="font-size:26px;font-weight:700;">Iristick Việt Nam</div><div style="margin-top:6px;color:#c9c2ff;font-size:15px;">Yêu cầu đặt lịch demo mới</div></div>'
+        . '<div style="padding:30px 32px;"><p style="margin:0 0 20px;font-size:16px;line-height:1.6;">Website vừa nhận được một yêu cầu tư vấn và đặt lịch demo.</p>'
+        . '<table role="presentation" style="width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid #e6e3ef;border-radius:12px;">' . $table_rows . '</table>'
+        . '<div style="margin-top:22px;padding:18px;border-radius:12px;background:#f5f3fb;"><strong style="display:block;margin-bottom:8px;color:#27242d;">Câu hỏi hoặc nội dung muốn trao đổi</strong><div style="font-size:14px;line-height:1.65;color:#4d4855;">'
+        . nl2br(esc_html($questions ?: 'Không cung cấp'))
+        . '</div></div><p style="margin:24px 0 0;color:#77727e;font-size:13px;">Bạn có thể trả lời trực tiếp email này để liên hệ với khách hàng.</p></div>'
+        . '<div style="padding:18px 32px;background:#faf9fc;color:#817c87;text-align:center;font-size:12px;">Iristick Việt Nam</div>'
+        . '</div></div></body></html>';
+    $headers = array(
+        'Content-Type: text/html; charset=UTF-8',
+        'Reply-To: ' . $name . ' <' . $email . '>',
+    );
     $sent = wp_mail($recipient, $subject, $message, $headers);
 
     wp_safe_redirect(home_url('/book-demo/?status=' . ($sent ? 'success' : 'error')));
