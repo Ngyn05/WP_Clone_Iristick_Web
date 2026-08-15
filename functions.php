@@ -190,6 +190,13 @@ function iristick_static_render($file) {
         return;
     }
 
+    // Correct awkward machine-translated calls to action in captured pages.
+    $html = str_replace(
+        'Nói với chúng tôi về một phi công',
+        'Liên hệ với chúng tôi',
+        $html
+    );
+
     // Remove SvelteKit preload links and every Svelte hydration/boot script.
     $html = preg_replace('#<link\b[^>]*rel=["\']modulepreload["\'][^>]*>\s*#i', '', $html);
     $html = preg_replace('#<script\b[^>]*src=["\'][^"\']*(?:_app/immutable|script\.js)[^"\']*["\'][^>]*>\s*</script>#is', '', $html);
