@@ -80,6 +80,7 @@
             if (!menuButton || !mobileMenu) { return; }
             mobileMenu.classList.remove('active');
             if (mobileNav) { mobileNav.classList.remove('active'); }
+            document.documentElement.classList.remove('iristick-menu-open');
             menuButton.setAttribute('aria-expanded', 'false');
             menuButton.setAttribute('aria-label', 'Mở menu');
             var menuIcon = menuButton.querySelector('.material-symbols-outlined');
@@ -96,6 +97,7 @@
                 if (open) {
                     mobileMenu.classList.add('active');
                     if (mobileNav) { mobileNav.classList.add('active'); }
+                    document.documentElement.classList.add('iristick-menu-open');
                     menuButton.setAttribute('aria-expanded', 'true');
                     menuButton.setAttribute('aria-label', 'Đóng menu');
                     var icon = menuButton.querySelector('.material-symbols-outlined');

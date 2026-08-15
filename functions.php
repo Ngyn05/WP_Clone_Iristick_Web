@@ -3,10 +3,37 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISTICK_STATIC_VERSION', '1.4.9');
+define('IRISTICK_STATIC_VERSION', '1.7.6');
 define('IRISTICK_STATIC_DIR', get_template_directory());
 define('IRISTICK_STATIC_URI', get_template_directory_uri());
 define('IRISTICK_EUR_TO_VND_RATE', 35000);
+
+function iristick_migrate_contact_email_v1() {
+    if (get_option('iristick_contact_email_migrated_v1')) {
+        return;
+    }
+
+    global $wpdb;
+    $old_email = 'info@iristick.com';
+    $new_email = 'contact@iristick.vn';
+    $wpdb->query($wpdb->prepare(
+        "UPDATE {$wpdb->posts} SET post_content = REPLACE(post_content, %s, %s), post_excerpt = REPLACE(post_excerpt, %s, %s) WHERE post_content LIKE %s OR post_excerpt LIKE %s",
+        $old_email,
+        $new_email,
+        $old_email,
+        $new_email,
+        '%' . $wpdb->esc_like($old_email) . '%',
+        '%' . $wpdb->esc_like($old_email) . '%'
+    ));
+    $wpdb->query($wpdb->prepare(
+        "UPDATE {$wpdb->postmeta} SET meta_value = REPLACE(meta_value, %s, %s) WHERE meta_value LIKE %s",
+        $old_email,
+        $new_email,
+        '%' . $wpdb->esc_like($old_email) . '%'
+    ));
+    update_option('iristick_contact_email_migrated_v1', current_time('mysql'), false);
+}
+add_action('init', 'iristick_migrate_contact_email_v1', 34);
 
 add_filter('wp_mail_from_name', function () {
     return 'Iristick Việt Nam';
@@ -25,6 +52,55 @@ function iristick_static_setup() {
     add_editor_style('assets/css/editor-blog.css');
 }
 add_action('after_setup_theme', 'iristick_static_setup');
+
+function iristick_enqueue_site_footer_styles() {
+    wp_enqueue_style('iristick-site-footer', IRISTICK_STATIC_URI . '/assets/css/site-footer.css', array(), IRISTICK_STATIC_VERSION);
+    wp_enqueue_style('iristick-responsive', IRISTICK_STATIC_URI . '/assets/css/responsive.css', array(), IRISTICK_STATIC_VERSION);
+    wp_enqueue_style('iristick-contact-widget', IRISTICK_STATIC_URI . '/assets/css/contact-widget.css', array(), IRISTICK_STATIC_VERSION);
+    wp_enqueue_script('iristick-contact-widget', IRISTICK_STATIC_URI . '/assets/js/contact-widget.js', array(), IRISTICK_STATIC_VERSION, true);
+}
+add_action('wp_enqueue_scripts', 'iristick_enqueue_site_footer_styles', 30);
+
+function iristick_contact_widget_html() {
+    return '<aside class="iristick-contact-widget" aria-label="Liên hệ Iristick Việt Nam">'
+        . '<div id="iristick-contact-panel" class="iristick-contact-panel" aria-hidden="true">'
+        . '<header><div><span>HỖ TRỢ KHÁCH HÀNG</span><strong>Liên hệ Iristick Việt Nam</strong></div><button type="button" class="iristick-contact-close" aria-label="Đóng cửa sổ liên hệ">×</button></header>'
+        . '<div class="iristick-contact-options">'
+        . '<a href="tel:0917834532"><i aria-hidden="true">☎</i><span><strong>Hotline tư vấn</strong><small>0917 834 532</small></span><b>Gọi ngay</b></a>'
+        . '<button type="button" class="iristick-contact-office-toggle"><i aria-hidden="true">⌂</i><span><strong>Hệ thống văn phòng</strong><small>Hà Nội và TP. Hồ Chí Minh</small></span><b>Xem địa chỉ</b></button>'
+        . '<a href="https://zalo.me/0917834532" target="_blank" rel="noopener noreferrer"><i aria-hidden="true">Z</i><span><strong>Chat qua Zalo</strong><small>Nhắn tin tư vấn ngay</small></span><b>Mở Zalo</b></a>'
+        . '</div><div class="iristick-contact-offices" aria-hidden="true"><button type="button" class="iristick-contact-office-back">← Quay lại</button>'
+        . '<article><span>CHI NHÁNH MIỀN BẮC</span><strong>Văn phòng Hà Nội</strong><p>226 Đường Láng, Phường Thịnh Quang, Quận Đống Đa, Hà Nội.</p><a href="tel:02473048700">☎ 024 7304 8700</a></article>'
+        . '<article><span>CHI NHÁNH MIỀN NAM</span><strong>Văn phòng TP.HCM</strong><p>137 Đường Hòa Hưng, Phường Hòa Hưng, TP. Hồ Chí Minh.</p><a href="tel:02873048700">☎ 028 7304 8700</a></article>'
+        . '</div><p class="iristick-contact-note">Đội ngũ Iristick Việt Nam sẵn sàng hỗ trợ nhu cầu của doanh nghiệp bạn.</p></div>'
+        . '<button type="button" class="iristick-contact-toggle" aria-expanded="false" aria-controls="iristick-contact-panel" aria-label="Mở cửa sổ liên hệ"><span class="iristick-contact-phone" aria-hidden="true">☎</span><span class="iristick-contact-x" aria-hidden="true">×</span><em>Liên hệ</em></button>'
+        . '</aside>';
+}
+
+function iristick_render_contact_widget() {
+    echo iristick_contact_widget_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+}
+add_action('wp_footer', 'iristick_render_contact_widget', 20);
+
+function iristick_site_footer_html() {
+    $logo = IRISTICK_STATIC_URI . '/assets/images/iristick-logo.webp';
+    return '<footer id="site-footer" class="iristick-vn-footer">'
+        . '<div class="iristick-vn-footer__top"><a class="iristick-vn-footer__brand" href="' . esc_url(home_url('/')) . '"><img src="' . esc_url($logo) . '" alt="Iristick Việt Nam"><span>VIỆT NAM</span></a><p>Giải pháp kính thông minh cho doanh nghiệp Việt</p></div>'
+        . '<div class="iristick-vn-footer__line"></div><h2>HỖ TRỢ KHÁCH HÀNG</h2><div class="iristick-vn-footer__cards">'
+        . '<article><div class="iristick-vn-footer__card-head"><span class="iristick-vn-footer__icon">⌂</span><b>CHI NHÁNH MIỀN BẮC</b></div><h3>VĂN PHÒNG HÀ NỘI</h3><a href="tel:02473048700">024 7304 8700</a><p>226 Đường Láng, Phường Thịnh Quang, Quận Đống Đa, Hà Nội.</p></article>'
+        . '<article><div class="iristick-vn-footer__card-head"><span class="iristick-vn-footer__icon">⌂</span><b>CHI NHÁNH MIỀN NAM</b></div><h3>VĂN PHÒNG TP.HCM</h3><a href="tel:02873048700">028 7304 8700</a><p>137 Đường Hòa Hưng, Phường Hòa Hưng, TP. Hồ Chí Minh.</p></article>'
+        . '<article class="iristick-vn-footer__card--primary"><div class="iristick-vn-footer__card-head"><span class="iristick-vn-footer__icon">☎</span><b>TƯ VẤN 24/7</b></div><h3>HOTLINE TỔNG ĐÀI</h3><a class="iristick-vn-footer__cta" href="tel:0917834532">0917 834 532</a><p>Hỗ trợ và tư vấn khách hàng mọi lúc, mọi nơi.</p></article>'
+        . '</div>'
+        . '<div class="iristick-vn-footer__promises"><span>Sản phẩm chính hãng</span><i></i><span>Tư vấn đúng nhu cầu</span><i></i><span>Hỗ trợ tận tâm</span></div>'
+        . '<div class="iristick-vn-footer__line iristick-vn-footer__line--links"></div>'
+        . '<div class="iristick-vn-footer__links">'
+        . '<section><h3>Khách hàng</h3><a href="' . esc_url(home_url('/book-demo/')) . '">Đặt lịch demo</a><a href="' . esc_url(home_url('/trial-program/')) . '">Chương trình dùng thử</a><a href="' . esc_url(home_url('/support/faqs/')) . '">Câu hỏi thường gặp</a><a href="mailto:contact@iristick.vn">Liên hệ hỗ trợ</a><a href="https://zalo.me/0917834532" target="_blank" rel="noopener noreferrer">Tư vấn qua Zalo</a></section>'
+        . '<section><h3>Sản phẩm</h3><a href="' . esc_url(home_url('/tools/Iristick.G3/')) . '">Iristick.G3</a><a href="' . esc_url(home_url('/tools/Iristick.G2-PRO/')) . '">Iristick.G2 PRO</a><a href="' . esc_url(home_url('/tools/Iristick.H1/')) . '">Iristick.H1</a><a href="' . esc_url(home_url('/tools/Iristick.H3/')) . '">Iristick.H3</a><a href="' . esc_url(home_url('/shop/')) . '">Tất cả sản phẩm</a></section>'
+        . '<section><h3>Giải pháp</h3><a href="' . esc_url(home_url('/products/Iristick.Collector/')) . '">Iristick.Collector</a><a href="' . esc_url(home_url('/products/Iristick.Teams/')) . '">Iristick.Teams</a><a href="' . esc_url(home_url('/products/Iristick.Assist/')) . '">Iristick.Assist</a><a href="' . esc_url(home_url('/developers/')) . '">Iristick.SDK</a><a href="https://docs.iristick.com" target="_blank" rel="noopener noreferrer">Trung tâm kiến thức</a></section>'
+        . '<section><h3>Thông tin</h3><a href="' . esc_url(home_url('/company/about-us/')) . '">Về chúng tôi</a><a href="' . esc_url(home_url('/company/careers/')) . '">Tuyển dụng</a><a href="' . esc_url(home_url('/blog/news/')) . '">Tin tức</a><a href="' . esc_url(home_url('/partners/Icona/')) . '">Đối tác</a><a href="' . esc_url(home_url('/sitemap/')) . '">Sơ đồ trang web</a></section>'
+        . '</div>'
+        . '<div class="iristick-vn-footer__bottom"><span>© ' . esc_html(wp_date('Y')) . ' Iristick Việt Nam</span><nav><a href="' . esc_url(home_url('/policies/privacy-policy/')) . '">Chính sách bảo mật</a><a href="' . esc_url(home_url('/policies/cookie-policy/')) . '">Chính sách cookie</a><a href="' . esc_url(home_url('/policies/terms-conditions/')) . '">Điều khoản sử dụng</a></nav></div></footer>';
+}
 
 function iristick_custom_favicon() {
     $version = rawurlencode(IRISTICK_STATIC_VERSION);
@@ -644,6 +720,163 @@ function iristick_import_blog_featured_images() {
 }
 add_action('init', 'iristick_import_blog_featured_images', 31);
 
+function iristick_static_editable_page_paths() {
+    return array(
+        'index', 'book-demo', 'contact', 'developers', 'enterprise', 'pricing', 'sitemap',
+        'trial-order', 'trial-program', 'company/about-us', 'company/careers',
+        'industries/agriculture', 'industries/field-service', 'industries/healthcare',
+        'partners/Icona', 'policies/cookie-policy', 'policies/privacy-policy',
+        'policies/terms-conditions', 'support/faqs',
+    );
+}
+
+function iristick_extract_static_page_body($html) {
+    if (preg_match('#</nav></div>(.*?)(?=<div class="footer-wrapper)#is', $html, $match)) {
+        $content = preg_replace('#<!--.*?-->#s', '', $match[1]);
+        return trim($content);
+    }
+    return '';
+}
+
+function iristick_import_static_pages_to_database() {
+    if (get_option('iristick_static_pages_imported_v1')) {
+        return;
+    }
+    // Prevent two simultaneous first requests from importing the same pages twice.
+    if (!add_option('iristick_static_pages_import_lock_v1', time(), '', false)) {
+        return;
+    }
+    $parents = array();
+    $parent_titles = array('company' => 'Công ty', 'industries' => 'Ngành nghề', 'partners' => 'Đối tác', 'policies' => 'Chính sách', 'support' => 'Hỗ trợ');
+    foreach ($parent_titles as $slug => $title) {
+        $existing = get_page_by_path($slug, OBJECT, 'page');
+        $parents[$slug] = $existing ? $existing->ID : wp_insert_post(array(
+            'post_type' => 'page', 'post_status' => 'publish', 'post_name' => $slug,
+            'post_title' => $title . ' | Iristick Việt Nam', 'post_content' => '',
+        ));
+    }
+    foreach (iristick_static_editable_page_paths() as $path) {
+        $existing_ids = get_posts(array('post_type' => 'page', 'post_status' => 'any', 'numberposts' => 1, 'meta_key' => '_iristick_static_path', 'meta_value' => $path, 'fields' => 'ids'));
+        if ($existing_ids) {
+            continue;
+        }
+        $file = $path === 'index'
+            ? iristick_static_page_root() . '/page.php'
+            : iristick_static_page_root() . '/' . $path . '/page.php';
+        if (!is_file($file)) {
+            continue;
+        }
+        $html = file_get_contents($file);
+        $content = iristick_extract_static_page_body($html);
+        $segments = explode('/', $path);
+        $slug = $path === 'index' ? 'trang-chu' : end($segments);
+        $parent = count($segments) > 1 && isset($parents[$segments[0]]) ? (int) $parents[$segments[0]] : 0;
+        $title = iristick_static_short_page_title($path, ucfirst(str_replace('-', ' ', $slug)));
+        $post_id = wp_insert_post(array(
+            'post_type' => 'page', 'post_status' => 'publish', 'post_parent' => $parent,
+            'post_name' => sanitize_title($slug), 'post_title' => $title . ' | Iristick Việt Nam',
+            'post_content' => $content,
+        ));
+        if (!is_wp_error($post_id)) {
+            update_post_meta($post_id, '_iristick_static_path', $path);
+        }
+    }
+    update_option('iristick_static_pages_imported_v1', current_time('mysql'), false);
+    delete_option('iristick_static_pages_import_lock_v1');
+}
+add_action('init', 'iristick_import_static_pages_to_database', 32);
+
+function iristick_remove_duplicate_imported_pages_v1() {
+    if (get_option('iristick_duplicate_imported_pages_cleaned_v1')) {
+        return;
+    }
+
+    foreach (iristick_static_editable_page_paths() as $path) {
+        $ids = get_posts(array(
+            'post_type' => 'page', 'post_status' => 'any', 'numberposts' => -1,
+            'meta_key' => '_iristick_static_path', 'meta_value' => $path,
+            'fields' => 'ids', 'orderby' => 'ID', 'order' => 'ASC',
+        ));
+        if (count($ids) < 2) {
+            continue;
+        }
+        array_shift($ids);
+        foreach ($ids as $duplicate_id) {
+            wp_delete_post($duplicate_id, true);
+        }
+    }
+
+    update_option('iristick_duplicate_imported_pages_cleaned_v1', current_time('mysql'), false);
+}
+add_action('init', 'iristick_remove_duplicate_imported_pages_v1', 33);
+
+function iristick_rebuild_all_wordpress_pages_v2() {
+    if (get_option('iristick_all_pages_rebuilt_v2')) {
+        return;
+    }
+
+    $page_ids = get_posts(array(
+        'post_type' => 'page', 'post_status' => 'any', 'numberposts' => -1,
+        'fields' => 'ids', 'orderby' => 'ID', 'order' => 'ASC',
+    ));
+    foreach ($page_ids as $page_id) {
+        wp_delete_post($page_id, true);
+    }
+
+    delete_option('iristick_static_pages_imported_v1');
+
+    $system_pages = array(
+        'shop' => array('Cửa hàng | Iristick Việt Nam', '', 'woocommerce_shop_page_id'),
+        'cart' => array('Giỏ hàng | Iristick Việt Nam', '[woocommerce_cart]', 'woocommerce_cart_page_id'),
+        'checkout' => array('Thanh toán | Iristick Việt Nam', '[woocommerce_checkout]', 'woocommerce_checkout_page_id'),
+        'my-account' => array('Tài khoản | Iristick Việt Nam', '[woocommerce_my_account]', 'woocommerce_myaccount_page_id'),
+    );
+    foreach ($system_pages as $slug => $data) {
+        $page_id = wp_insert_post(array(
+            'post_type' => 'page', 'post_status' => 'publish', 'post_name' => $slug,
+            'post_title' => $data[0], 'post_content' => $data[1],
+        ));
+        if (!is_wp_error($page_id)) {
+            update_option($data[2], (int) $page_id);
+        }
+    }
+
+    update_option('iristick_all_pages_rebuilt_v2', current_time('mysql'), false);
+}
+add_action('init', 'iristick_rebuild_all_wordpress_pages_v2', 31);
+
+function iristick_get_database_page_for_static_path($path) {
+    $ids = get_posts(array('post_type' => 'page', 'post_status' => 'publish', 'numberposts' => 1, 'meta_key' => '_iristick_static_path', 'meta_value' => $path, 'fields' => 'ids'));
+    return $ids ? get_post($ids[0]) : null;
+}
+
+function iristick_inject_database_page_content($html) {
+    $path = iristick_static_request_path();
+    if (!in_array($path, iristick_static_editable_page_paths(), true)) {
+        return $html;
+    }
+    $page = iristick_get_database_page_for_static_path($path);
+    if (!$page || trim($page->post_content) === '') {
+        return $html;
+    }
+    $content = do_shortcode($page->post_content);
+    $file = $path === 'index'
+        ? iristick_static_page_root() . '/page.php'
+        : iristick_static_page_root() . '/' . $path . '/page.php';
+    $content = str_replace(
+        array('{{IRISTICK_ADMIN_POST_URL}}', '{{IRISTICK_DEMO_FORM_NONCE}}', '{{IRISTICK_TRIAL_FORM_NONCE}}', '{{IRISTICK_THEME_URI}}'),
+        array(esc_url(admin_url('admin-post.php')), wp_nonce_field('iristick_demo_request', 'iristick_demo_nonce', true, false), wp_nonce_field('iristick_trial_request', 'iristick_trial_nonce', true, false), esc_url(IRISTICK_STATIC_URI)),
+        $content
+    );
+    $content = preg_replace_callback('#\b(href|src|poster|action)=("|\')([^"\']*)\2#i', function ($matches) use ($file) {
+        $url = iristick_static_rewrite_url($matches[3], $file);
+        return $matches[1] . '=' . $matches[2] . esc_url($url) . $matches[2];
+    }, $content);
+    // Keep the complete editable heading markup from post_content. Several captured
+    // pages use nested elements/classes inside H1 for their hero typography.
+    return preg_replace('#(</nav></div>).*?(?=<div class="footer-wrapper)#is', '$1' . $content, $html, 1) ?: $html;
+}
+
 // Direct checkout always purchases one unit, so no quantity selector is shown.
 add_filter('woocommerce_is_sold_individually', '__return_true', 10, 2);
 
@@ -1189,8 +1422,18 @@ add_filter('pre_get_document_title', function ($title) {
     if (function_exists('is_product') && is_product()) {
         return single_post_title('', false) . ' | Iristick Việt Nam';
     }
+    if (function_exists('is_shop') && is_shop()) {
+        $shop_page_id = (int) get_option('woocommerce_shop_page_id');
+        return $shop_page_id ? get_the_title($shop_page_id) : 'Cửa hàng | Iristick Việt Nam';
+    }
+    if (is_page()) {
+        $page = get_queried_object();
+        if ($page instanceof WP_Post) {
+            return get_the_title($page);
+        }
+    }
     return $title;
-});
+}, 20);
 add_filter('document_title_separator', function ($separator) {
     return function_exists('is_product') && is_product() ? '|' : $separator;
 });
@@ -1404,6 +1647,10 @@ function iristick_static_rewrite_url($url, $file) {
     if ($parts === false) {
         return $url;
     }
+    // The knowledge centre is a separate Iristick service and must remain external.
+    if (!empty($parts['host']) && preg_match('/^docs\.iristick\.com$/i', $parts['host'])) {
+        return $url;
+    }
     if (!empty($parts['host']) && !preg_match('/(^|\.)iristick\.com$/i', $parts['host'])) {
         return $url;
     }
@@ -1547,6 +1794,9 @@ function iristick_static_render($file) {
         return;
     }
 
+    // Replace the captured footer with the unified Iristick Việt Nam footer.
+    $html = preg_replace('#<div class="footer-wrapper\b.*?</footer></div>#is', iristick_site_footer_html(), $html);
+
     // Correct awkward machine-translated calls to action in captured pages.
     $html = str_replace(
         'Nói với chúng tôi về một phi công',
@@ -1664,6 +1914,7 @@ function iristick_static_render($file) {
     // WooCommerce Blocks may print this after its enqueue phase; static pages
     // contain no Woo blocks, so keep its broad global CSS out of the snapshot.
     $html = preg_replace('#<link\b[^>]*wc-blocks\.css[^>]*>\s*#i', '', $html);
+    $html = iristick_inject_database_page_content($html);
     $html = iristick_inject_blog_database_content($html);
     $html = iristick_convert_static_euro_prices($html);
 

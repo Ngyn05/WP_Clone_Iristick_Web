@@ -63,7 +63,23 @@ $faqs = (array) $product->get_meta('_iristick_faq');
                 <?php endforeach; ?>
             </div>
         </details>
-        <a href="<?php echo esc_url(home_url('/blog/news/')); ?>">Tài nguyên</a>
+        <details>
+            <summary>Tài nguyên</summary>
+            <div class="iristick-store-products iristick-store-resources">
+                <a href="https://docs.iristick.com" target="_blank" rel="noopener noreferrer">
+                    <strong>Trung tâm kiến thức</strong>
+                    <small>Tất cả kiến thức của chúng ta đều có ở đây.</small>
+                </a>
+                <a href="<?php echo esc_url(home_url('/support/faqs/')); ?>">
+                    <strong>Câu hỏi thường gặp</strong>
+                    <small>Có thể câu hỏi của bạn đã được giải đáp tại đây.</small>
+                </a>
+                <a href="<?php echo esc_url(home_url('/blog/news/')); ?>">
+                    <strong>Tin tức</strong>
+                    <small>Cập nhật những thông tin mới nhất từ Iristick.</small>
+                </a>
+            </div>
+        </details>
         <a href="<?php echo esc_url(home_url('/pricing/')); ?>">Bảng giá</a>
         <a href="<?php echo esc_url(home_url('/book-demo/')); ?>">Đặt lịch demo</a>
     </nav>
@@ -147,6 +163,7 @@ $faqs = (array) $product->get_meta('_iristick_faq');
         </section>
     </article>
 </main>
+<?php echo iristick_site_footer_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <?php wp_footer(); ?>
 </body>
 </html>
