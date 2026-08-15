@@ -183,6 +183,52 @@ function iristick_static_rewrite_url($url, $file) {
     return home_url('/' . trim($page_path, '/') . '/') . $query . $fragment;
 }
 
+function iristick_static_short_page_title($path, $original = '') {
+    $titles = array(
+        'index' => 'Trang chủ',
+        'pricing' => 'Bảng giá',
+        'book-demo' => 'Đặt lịch demo',
+        'trial-program' => 'Chương trình dùng thử',
+        'trial-order' => 'Đăng ký dùng thử',
+        'enterprise' => 'Giải pháp doanh nghiệp',
+        'developers' => 'SDK cho nhà phát triển',
+        'contact' => 'Liên hệ',
+        'sitemap' => 'Sơ đồ trang',
+        'company/about-us' => 'Về chúng tôi',
+        'company/careers' => 'Tuyển dụng',
+        'industries/agriculture' => 'Nông nghiệp',
+        'industries/field-service' => 'Dịch vụ hiện trường',
+        'industries/healthcare' => 'Chăm sóc sức khỏe',
+        'partners/Icona' => 'Đối tác Icona',
+        'products/Iristick.Assist' => 'Iristick.Assist',
+        'products/Iristick.Collector' => 'Iristick.Collector',
+        'products/Iristick.Teams' => 'Iristick.Teams',
+        'tools/Iristick.G2-PRO' => 'Iristick.G2 PRO',
+        'tools/Iristick.G3' => 'Iristick.G3',
+        'tools/Iristick.H1' => 'Iristick.H1',
+        'tools/Iristick.H3' => 'Iristick.H3',
+        'support/faqs' => 'Câu hỏi thường gặp',
+        'policies/cookie-policy' => 'Chính sách cookie',
+        'policies/privacy-policy' => 'Chính sách bảo mật',
+        'policies/terms-conditions' => 'Điều khoản và điều kiện',
+        'blog/news' => 'Tin tức',
+        'blog/news/agrifood-professionals-benefit-from-smartglasses' => 'Kính thông minh trong ngành thực phẩm',
+        'blog/news/also-and-iristick-smart-glasses-extend-partnership' => 'ALSO và Iristick mở rộng hợp tác',
+        'blog/news/challenges-of-field-service-operations-during-summer-holidays-and-how-to-tackle-them' => 'Vận hành dịch vụ hiện trường mùa hè',
+        'blog/news/iristick-announces-major-capital-increase' => 'Iristick công bố tăng vốn',
+        'blog/news/iristick-distribution-agreement-capestone' => 'Iristick hợp tác cùng Capestone',
+        'blog/news/join-webinar-hands-free-remote-assistance-smart-glasses-hazardous-areas' => 'Webinar hỗ trợ từ xa tại khu vực nguy hiểm',
+        'blog/news/microsoft-teams-on-iristick-available-on-smart-glasses' => 'Microsoft Teams trên kính Iristick',
+        'blog/news/second-generation-smart-glasses-iristick' => 'Kính thông minh Iristick thế hệ thứ hai',
+        'blog/news/tackle-business-travel-emissions' => 'Giảm phát thải từ công tác',
+        'blog/news/vr-ar-xr-difference' => 'Sự khác biệt giữa VR, AR và XR',
+        'blog/news/webinar-hands-free-microsoft-teams-iristick' => 'Webinar Microsoft Teams rảnh tay',
+        'blog/news/webinar-handtmann-icona' => 'Webinar cùng Handtmann và Icona',
+    );
+
+    return isset($titles[$path]) ? $titles[$path] : $original;
+}
+
 function iristick_static_render($file) {
     $html = file_get_contents($file);
     if ($html === false) {
@@ -196,6 +242,26 @@ function iristick_static_render($file) {
         'Liên hệ với chúng tôi',
         $html
     );
+
+    // Use one consistent browser title across every captured page.
+    $title_suffix = ' | Iristick Việt Nam';
+    $request_path = iristick_static_request_path();
+    if (preg_match('#<title\b[^>]*>#i', $html)) {
+        $html = preg_replace_callback(
+            '#<title\b([^>]*)>(.*?)</title>#is',
+            function ($matches) use ($title_suffix, $request_path) {
+                $page_title = trim(wp_strip_all_tags(html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                $page_title = preg_replace('/\s*\|\s*Iristick(?:\s+(?:Việt Nam|VN))?\s*$/iu', '', $page_title);
+                $page_title = iristick_static_short_page_title($request_path, $page_title);
+                return '<title' . $matches[1] . '>' . esc_html($page_title . $title_suffix) . '</title>';
+            },
+            $html,
+            1
+        );
+    } else {
+        $page_title = iristick_static_short_page_title($request_path, 'Iristick');
+        $html = '<title>' . esc_html($page_title . $title_suffix) . '</title>' . $html;
+    }
 
     // Remove SvelteKit preload links and every Svelte hydration/boot script.
     $html = preg_replace('#<link\b[^>]*rel=["\']modulepreload["\'][^>]*>\s*#i', '', $html);
@@ -260,6 +326,8 @@ function iristick_static_render($file) {
     ob_start();
     wp_head();
     $wp_head = ob_get_clean();
+    // The snapshot already owns the document title; remove WordPress' duplicate.
+    $wp_head = preg_replace('#<title\b[^>]*>.*?</title>\s*#is', '', $wp_head);
     $wp_head = preg_replace('#<link\b[^>]*id=["\']wc-blocks-style-css["\'][^>]*>\s*#i', '', $wp_head);
     ob_start();
     wp_body_open();
