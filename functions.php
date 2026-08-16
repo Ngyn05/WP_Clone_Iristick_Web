@@ -1617,6 +1617,16 @@ function iristick_static_requested_file() {
 
     $relative = $path === 'index' ? 'page.php' : trailingslashit($path) . 'page.php';
     $file = iristick_static_page_root() . '/' . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+
+    // Newly created news posts do not have a captured static directory. Render
+    // them through the news shell so the database content can still be injected.
+    if (!is_file($file) && preg_match('#^blog/news/([^/]+)$#', $path, $matches)) {
+        $news_post = get_page_by_path($matches[1], OBJECT, 'post');
+        if ($news_post instanceof WP_Post && $news_post->post_status === 'publish') {
+            $file = iristick_static_page_root() . '/blog/news/page.php';
+        }
+    }
+
     $root = realpath(iristick_static_page_root());
     $real = is_file($file) ? realpath($file) : false;
 
@@ -1784,7 +1794,14 @@ function iristick_inject_blog_database_content($html) {
     if ($content === '') {
         return $html;
     }
-    return preg_replace('#<div class="app-container".*?</div></div><!----><!----></div><!---->\s*(?=<!--\[!-->.*?<div class="footer-wrapper)#is', $content, $html, 1) ?: $html;
+
+    $content_start = strpos($html, '<div class="app-container"');
+    $footer_start = strpos($html, '<footer id="site-footer"');
+    if ($content_start === false || $footer_start === false || $footer_start <= $content_start) {
+        return $html;
+    }
+
+    return substr($html, 0, $content_start) . $content . substr($html, $footer_start);
 }
 
 function iristick_static_render($file) {
