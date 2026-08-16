@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISTICK_STATIC_VERSION', '1.7.8');
+define('IRISTICK_STATIC_VERSION', '1.8.1');
 define('IRISTICK_STATIC_DIR', get_template_directory());
 define('IRISTICK_STATIC_URI', get_template_directory_uri());
 define('IRISTICK_EUR_TO_VND_RATE', 35000);
@@ -2361,12 +2361,14 @@ function iristick_static_render($file) {
     // Replace the captured footer with the unified Iristick Việt Nam footer.
     $html = preg_replace('#<div class="footer-wrapper\b.*?</footer></div>#is', iristick_site_footer_html(), $html);
 
-    // Correct awkward machine-translated calls to action in captured pages.
-    $html = str_replace(
-        'Nói với chúng tôi về một phi công',
-        'Liên hệ với chúng tôi',
-        $html
+    // Correct awkward machine-translated text in captured pages.
+    $translations = array(
+        'Nói với chúng tôi về một phi công' => 'Liên hệ với chúng tôi',
+        '<div class="pc-promo-title svelte-yaxynm">Name <span' => '<div class="pc-promo-title svelte-yaxynm">Ưu đãi đặc biệt <span',
+        '<strong>Name</strong>' => '<strong>Pin dùng cả ca</strong>',
+        '<strong>Comment</strong>' => '<strong>Tối ưu qua điện thoại thông minh</strong>',
     );
+    $html = str_replace(array_keys($translations), array_values($translations), $html);
 
     // Use one consistent browser title across every captured page.
     $title_suffix = ' | Iristick Việt Nam';
