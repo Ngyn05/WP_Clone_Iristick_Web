@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISTICK_STATIC_VERSION', '1.9.3');
+define('IRISTICK_STATIC_VERSION', '1.9.4');
 define('IRISTICK_STATIC_DIR', get_template_directory());
 define('IRISTICK_STATIC_URI', get_template_directory_uri());
 define('IRISTICK_EUR_TO_VND_RATE', 35000);
@@ -106,7 +106,107 @@ function iristick_get_product_permalink_by_sku($sku, $fallback_path = '') {
     return $fallback_path !== '' ? home_url($fallback_path) : home_url('/');
 }
 
+function iristick_custom_robots_txt($output, $public = true) {
+    $sitemap_url = esc_url(home_url('/sitemap_index.xml'));
+    
+    $robots = "User-agent: *\n";
+    $robots .= "Disallow: /wp-admin/\n";
+    $robots .= "Allow: /wp-admin/admin-ajax.php\n\n";
+    $robots .= "Sitemap: " . $sitemap_url . "\n";
+    
+    return $robots;
+}
+add_filter('robots_txt', 'iristick_custom_robots_txt', 9999, 2);
+add_filter('wpseo_robots_txt', 'iristick_custom_robots_txt', 9999, 1);
+
+function iristick_render_xml_sitemap() {
+    header('Content-Type: application/xml; charset=utf-8');
+    header('X-Robots-Tag: noindex, follow', true);
+
+    $pages = array(
+        array('url' => home_url('/'), 'priority' => '1.0', 'changefreq' => 'daily'),
+        array('url' => home_url('/pricing/'), 'priority' => '0.9', 'changefreq' => 'weekly'),
+        array('url' => home_url('/trial-program/'), 'priority' => '0.9', 'changefreq' => 'weekly'),
+        array('url' => home_url('/trial-order/'), 'priority' => '0.8', 'changefreq' => 'monthly'),
+        array('url' => home_url('/book-demo/'), 'priority' => '0.8', 'changefreq' => 'monthly'),
+        array('url' => home_url('/contact/'), 'priority' => '0.8', 'changefreq' => 'monthly'),
+        array('url' => home_url('/sitemap/'), 'priority' => '0.7', 'changefreq' => 'weekly'),
+        array('url' => home_url('/enterprise/'), 'priority' => '0.8', 'changefreq' => 'monthly'),
+        array('url' => home_url('/developers/'), 'priority' => '0.8', 'changefreq' => 'monthly'),
+        array('url' => home_url('/partners/Icona/'), 'priority' => '0.7', 'changefreq' => 'monthly'),
+        array('url' => home_url('/industries/agriculture/'), 'priority' => '0.8', 'changefreq' => 'monthly'),
+        array('url' => home_url('/industries/healthcare/'), 'priority' => '0.8', 'changefreq' => 'monthly'),
+        array('url' => home_url('/industries/field-service/'), 'priority' => '0.8', 'changefreq' => 'monthly'),
+        array('url' => home_url('/support/faqs/'), 'priority' => '0.8', 'changefreq' => 'weekly'),
+        array('url' => home_url('/company/about-us/'), 'priority' => '0.7', 'changefreq' => 'monthly'),
+        array('url' => home_url('/company/careers/'), 'priority' => '0.6', 'changefreq' => 'monthly'),
+        array('url' => home_url('/blog/news/'), 'priority' => '0.8', 'changefreq' => 'daily'),
+        array('url' => home_url('/policies/privacy-policy/'), 'priority' => '0.5', 'changefreq' => 'yearly'),
+        array('url' => home_url('/policies/cookie-policy/'), 'priority' => '0.5', 'changefreq' => 'yearly'),
+        array('url' => home_url('/policies/terms-conditions/'), 'priority' => '0.5', 'changefreq' => 'yearly'),
+        array('url' => home_url('/products/Iristick.Collector/'), 'priority' => '0.9', 'changefreq' => 'weekly'),
+        array('url' => home_url('/products/Iristick.Teams/'), 'priority' => '0.9', 'changefreq' => 'weekly'),
+        array('url' => home_url('/products/Iristick.Assist/'), 'priority' => '0.9', 'changefreq' => 'weekly'),
+    );
+
+    // Products from Database
+    $hardware = iristick_get_dynamic_hardware_products();
+    foreach ($hardware as $h) {
+        $pages[] = array(
+            'url' => $h['url'],
+            'priority' => '0.9',
+            'changefreq' => 'weekly',
+        );
+    }
+
+    // News from Database
+    $posts = get_posts(array(
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'numberposts' => 100,
+    ));
+    foreach ($posts as $post) {
+        $pages[] = array(
+            'url' => get_permalink($post),
+            'priority' => '0.7',
+            'changefreq' => 'monthly',
+            'lastmod' => get_the_modified_date('c', $post),
+        );
+    }
+
+    echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    foreach ($pages as $p) {
+        echo '  <url>' . "\n";
+        echo '    <loc>' . esc_url($p['url']) . '</loc>' . "\n";
+        if (!empty($p['lastmod'])) {
+            echo '    <lastmod>' . esc_html($p['lastmod']) . '</lastmod>' . "\n";
+        }
+        echo '    <changefreq>' . esc_html($p['changefreq']) . '</changefreq>' . "\n";
+        echo '    <priority>' . esc_html($p['priority']) . '</priority>' . "\n";
+        echo '  </url>' . "\n";
+    }
+    echo '</urlset>';
+}
+
 add_action('template_redirect', function () {
+    $request = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
+    $raw_path = trim((string) wp_parse_url($request, PHP_URL_PATH), '/');
+
+    if ($raw_path === 'robots.txt') {
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "User-agent: *\n";
+        echo "Disallow: /wp-admin/\n";
+        echo "Allow: /wp-admin/admin-ajax.php\n\n";
+        echo "Sitemap: " . esc_url(home_url('/sitemap_index.xml')) . "\n";
+        exit;
+    }
+
+    if ($raw_path === 'sitemap.xml') {
+        iristick_render_xml_sitemap();
+        exit;
+    }
+
     if (function_exists('is_shop') && (is_shop() || is_product_taxonomy())) {
         wp_safe_redirect(home_url('/pricing/'), 301);
         exit;
@@ -2277,8 +2377,13 @@ function iristick_static_request_path() {
     }
 
     $request = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
-    $path = trim((string) wp_parse_url($request, PHP_URL_PATH), '/');
-    $path = preg_replace('/\.(?:html?|php)$/i', '', $path);
+    $raw_path = trim((string) wp_parse_url($request, PHP_URL_PATH), '/');
+
+    if ($raw_path === 'robots.txt' || $raw_path === 'sitemap.xml' || $raw_path === 'wp-sitemap.xml' || preg_match('#^wp-sitemap.*\.xml$#i', $raw_path)) {
+        return false;
+    }
+
+    $path = preg_replace('/\.(?:html?|php)$/i', '', $raw_path);
     $path = preg_replace('#[^a-zA-Z0-9/_\-.]+#u', '', $path);
 
     if ($path === '') {
