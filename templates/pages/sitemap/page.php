@@ -36,9 +36,8 @@
 
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-		<link rel="preconnect" href="https://shop.iristick.com">
-		<link rel="stylesheet" href="../css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
-		<link rel="stylesheet" href="../css2-1?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Manrope:wght@200..800&display=swap">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&display=swap">
 
 		<!-- UMAMI -->
 		<script defer="" src="../script.js" data-website-id="88982510-1d87-48fb-889d-dd16c1627e06" data-domains="iristick.com, shop.iristick.com"></script>
@@ -68,12 +67,13 @@
 </style>
 <div class="sitemap-grid">
     <div class="sitemap-card">
-        <h3><span class="material-symbols-outlined">eyeglasses</span>Phần cứng kính</h3>
+        <h3><span class="material-symbols-outlined">robot</span>Phần cứng kính</h3>
         <ul class="sitemap-list">
-            <li><a href="<?php echo esc_url(iristick_get_product_permalink_by_sku('IR-G3', '/product/iristick-g3/')); ?>">Iristick.G3 <span class="badge">MỚI</span></a></li>
-            <li><a href="<?php echo esc_url(iristick_get_product_permalink_by_sku('IR-G2-PRO', '/product/iristick-g2-pro/')); ?>">Iristick.G2 PRO</a></li>
-            <li><a href="<?php echo esc_url(iristick_get_product_permalink_by_sku('IR-H1', '/product/iristick-h1/')); ?>">Iristick.H1</a></li>
-            <li><a href="<?php echo esc_url(iristick_get_product_permalink_by_sku('IR-H3', '/product/iristick-h3/')); ?>">Iristick.H3 <span class="badge soon">Sắp ra mắt</span></a></li>
+            <!-- DYNAMIC_HARDWARE_PRODUCTS -->
+            <li><a href="/product/iristick-g3/">Iristick.G3 <span class="badge">MỚI</span></a></li>
+            <li><a href="/product/iristick-g2-pro/">Iristick.G2 PRO</a></li>
+            <li><a href="/product/iristick-h1/">Iristick.H1</a></li>
+            <li><a href="/product/iristick-h3/">Iristick.H3 <span class="badge soon">Sắp ra mắt</span></a></li>
         </ul>
     </div>
     <div class="sitemap-card">

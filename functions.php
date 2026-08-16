@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISTICK_STATIC_VERSION', '1.8.8');
+define('IRISTICK_STATIC_VERSION', '1.9.3');
 define('IRISTICK_STATIC_DIR', get_template_directory());
 define('IRISTICK_STATIC_URI', get_template_directory_uri());
 define('IRISTICK_EUR_TO_VND_RATE', 35000);
@@ -129,6 +129,70 @@ add_action('template_redirect', function () {
     }
 });
 
+function iristick_get_dynamic_hardware_products() {
+    $list = array();
+    if (function_exists('wc_get_products')) {
+        $products = wc_get_products(array(
+            'status' => 'publish',
+            'limit' => -1,
+            'orderby' => 'menu_order title',
+            'order' => 'ASC',
+        ));
+        foreach ($products as $p) {
+            $sku = $p->get_sku();
+            $name = $p->get_name();
+            $url = $p->get_permalink();
+            $desc = wp_strip_all_tags($p->get_short_description() ?: 'Kính thông minh công nghiệp chính hãng.');
+            $badge = '';
+            if ($sku === 'IR-G3' || $p->is_featured()) {
+                $badge = 'MỚI';
+            } elseif ($sku === 'IR-H3' || !$p->is_in_stock()) {
+                $badge = 'Sắp ra mắt';
+            }
+            $list[] = array(
+                'sku' => $sku,
+                'name' => $name,
+                'url' => $url,
+                'desc' => $desc,
+                'badge' => $badge,
+            );
+        }
+    }
+    if (empty($list)) {
+        $list = array(
+            array(
+                'sku' => 'IR-G3',
+                'name' => 'Iristick.G3',
+                'url' => home_url('/product/iristick-g3/'),
+                'desc' => 'Kính thông minh thế hệ mới đa năng.',
+                'badge' => 'MỚI',
+            ),
+            array(
+                'sku' => 'IR-G2-PRO',
+                'name' => 'Iristick.G2 PRO',
+                'url' => home_url('/product/iristick-g2-pro/'),
+                'desc' => 'Kính thông minh công nghiệp bền bỉ.',
+                'badge' => '',
+            ),
+            array(
+                'sku' => 'IR-H1',
+                'name' => 'Iristick.H1',
+                'url' => home_url('/product/iristick-h1/'),
+                'desc' => 'Kính thông minh gắn mũ bảo hộ.',
+                'badge' => '',
+            ),
+            array(
+                'sku' => 'IR-H3',
+                'name' => 'Iristick.H3',
+                'url' => home_url('/product/iristick-h3/'),
+                'desc' => 'Thế hệ kính thông minh hạng nặng tiếp theo.',
+                'badge' => 'Sắp ra mắt',
+            ),
+        );
+    }
+    return $list;
+}
+
 function iristick_site_header_html() {
     $logo = IRISTICK_STATIC_URI . '/assets/images/iristick-logo.webp';
     $home = esc_url(home_url('/'));
@@ -136,10 +200,20 @@ function iristick_site_header_html() {
     $pricing = esc_url(home_url('/pricing/'));
     $trial = esc_url(home_url('/trial-program/'));
 
-    $g3_url = esc_url(iristick_get_product_permalink_by_sku('IR-G3', '/tools/Iristick.G3/'));
-    $g2_url = esc_url(iristick_get_product_permalink_by_sku('IR-G2-PRO', '/tools/Iristick.G2-PRO/'));
-    $h1_url = esc_url(iristick_get_product_permalink_by_sku('IR-H1', '/tools/Iristick.H1/'));
-    $h3_url = esc_url(iristick_get_product_permalink_by_sku('IR-H3', '/tools/Iristick.H3/'));
+    $hardware_items = iristick_get_dynamic_hardware_products();
+    $desktop_hardware_html = '';
+    $mobile_hardware_html = '';
+    foreach ($hardware_items as $item) {
+        $badge_html = '';
+        if ($item['badge'] === 'MỚI') {
+            $badge_html = '<span class="beta svelte-1wxfnil">MỚI</span>';
+        } elseif ($item['badge'] !== '') {
+            $badge_html = '<span class="comingsoon svelte-1wxfnil">' . esc_html($item['badge']) . '</span>';
+        }
+        $desktop_hardware_html .= '<a href="' . esc_url($item['url']) . '"><div class="dropdown-topic svelte-1wxfnil"><div>' . esc_html($item['name']) . $badge_html . '</div><span>' . esc_html($item['desc']) . '</span></div></a>';
+        $mobile_hardware_html .= '<a href="' . esc_url($item['url']) . '"><div class="dropdown-topic svelte-1wxfnil"><div>' . esc_html($item['name']) . $badge_html . '</div><span>' . esc_html($item['desc']) . '</span></div></a>';
+    }
+
     $collector_url = esc_url(home_url('/products/Iristick.Collector/'));
     $teams_url = esc_url(home_url('/products/Iristick.Teams/'));
     $assist_url = esc_url(home_url('/products/Iristick.Assist/'));
@@ -161,10 +235,7 @@ function iristick_site_header_html() {
         . '<div class="dropdown-content svelte-1wxfnil">'
         . '<div class="dropdown-cat svelte-1wxfnil">'
         . '<h4><span class="material-symbols-outlined svelte-1wxfnil">robot</span>Sản phẩm</h4>'
-        . '<a href="' . $g3_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G3<span class="beta svelte-1wxfnil">MỚI</span></div><span>Kính thông minh thế hệ mới đa năng.</span></div></a>'
-        . '<a href="' . $g2_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G2 PRO</div><span>Kính thông minh công nghiệp bền bỉ.</span></div></a>'
-        . '<a href="' . $h1_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H1</div><span>Kính thông minh gắn mũ bảo hộ.</span></div></a>'
-        . '<a href="' . $h3_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H3<span class="comingsoon svelte-1wxfnil">Sắp ra mắt</span></div><span>Thế hệ kính thông minh hạng nặng tiếp theo.</span></div></a>'
+        . $desktop_hardware_html
         . '</div>'
         . '<div class="dropdown-cat svelte-1wxfnil">'
         . '<h4><span class="material-symbols-outlined svelte-1wxfnil">devices</span>Công cụ</h4>'
@@ -220,10 +291,7 @@ function iristick_site_header_html() {
         . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
         . '<span class="topic-title svelte-1wxfnil">Sản phẩm</span>'
         . '<div class="topic-content svelte-1wxfnil">'
-        . '<a href="' . $g3_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G3<span class="beta svelte-1wxfnil">MỚI</span></div><span>Kính thông minh thế hệ mới</span></div></a>'
-        . '<a href="' . $g2_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G2 PRO</div><span>Kính thông minh công nghiệp bền bỉ</span></div></a>'
-        . '<a href="' . $h1_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H1</div><span>Kính gắn mũ bảo hộ</span></div></a>'
-        . '<a href="' . $h3_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H3<span class="comingsoon svelte-1wxfnil">Sắp ra mắt</span></div><span>Kính hạng nặng thế hệ mới</span></div></a>'
+        . $mobile_hardware_html
         . '</div>'
         . '</div>'
         . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
@@ -2440,6 +2508,8 @@ function iristick_static_render($file) {
         return;
     }
 
+    $request_path = iristick_static_request_path();
+
     // Replace the captured navigation header with the unified Iristick Việt Nam header.
     $html = preg_replace('#<div class="navigation-wrapper\b.*?(?:<nav class="mobile\b.*?<\/nav>)\s*<\/div>#is', iristick_site_header_html(), $html);
 
@@ -2455,9 +2525,28 @@ function iristick_static_render($file) {
     );
     $html = str_replace(array_keys($translations), array_values($translations), $html);
 
+    // Dynamically inject published products from WooCommerce database into Sitemap
+    if ($request_path === 'sitemap') {
+        $hardware_items = iristick_get_dynamic_hardware_products();
+        $sitemap_hardware_html = '';
+        foreach ($hardware_items as $item) {
+            $badge_html = '';
+            if ($item['badge'] === 'MỚI') {
+                $badge_html = ' <span class="badge">MỚI</span>';
+            } elseif ($item['badge'] !== '') {
+                $badge_html = ' <span class="badge soon">' . esc_html($item['badge']) . '</span>';
+            }
+            $sitemap_hardware_html .= '<li><a href="' . esc_url($item['url']) . '">' . esc_html($item['name']) . $badge_html . '</a></li>';
+        }
+        $html = preg_replace(
+            '#<ul class="sitemap-list\b[^"]*">\s*<!-- DYNAMIC_HARDWARE_PRODUCTS -->.*?<\/ul>#is',
+            '<ul class="sitemap-list">' . $sitemap_hardware_html . '</ul>',
+            $html
+        );
+    }
+
     // Use one consistent browser title across every captured page.
     $title_suffix = ' | Iristick Việt Nam';
-    $request_path = iristick_static_request_path();
     if (preg_match('#<title\b[^>]*>#i', $html)) {
         $html = preg_replace_callback(
             '#<title\b([^>]*)>(.*?)</title>#is',
