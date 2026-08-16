@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISTICK_STATIC_VERSION', '1.7.6');
+define('IRISTICK_STATIC_VERSION', '1.7.8');
 define('IRISTICK_STATIC_DIR', get_template_directory());
 define('IRISTICK_STATIC_URI', get_template_directory_uri());
 define('IRISTICK_EUR_TO_VND_RATE', 35000);
@@ -81,6 +81,164 @@ function iristick_render_contact_widget() {
     echo iristick_contact_widget_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
 add_action('wp_footer', 'iristick_render_contact_widget', 20);
+
+function iristick_site_header_html() {
+    $logo = IRISTICK_STATIC_URI . '/assets/images/iristick-logo.webp';
+    $home = esc_url(home_url('/'));
+    $demo = esc_url(home_url('/book-demo/'));
+    $pricing = esc_url(home_url('/pricing/'));
+    $trial = esc_url(home_url('/trial-program/'));
+
+    return '<div class="navigation-wrapper svelte-1wxfnil">'
+        . '<nav class="laptop svelte-1wxfnil">'
+        . '<div class="nav-container svelte-1wxfnil">'
+        . '<div class="nav-logo svelte-1wxfnil"><a href="' . $home . '"><picture><img src="' . esc_url($logo) . '" alt="logo Iristick" class="svelte-1wxfnil"></picture></a></div>'
+        . '<div class="nav-pages svelte-1wxfnil">'
+        . '<button class="nav-cat svelte-1wxfnil"><span class="svelte-1wxfnil">Sản phẩm</span><span class="material-symbols-outlined svelte-1wxfnil">keyboard_arrow_down</span></button>'
+        . '<button class="nav-cat svelte-1wxfnil"><span class="svelte-1wxfnil">Tài nguyên</span><span class="material-symbols-outlined svelte-1wxfnil">keyboard_arrow_down</span></button>'
+        . '<button class="nav-cat svelte-1wxfnil"><span class="svelte-1wxfnil">Ngành nghề</span><span class="material-symbols-outlined svelte-1wxfnil">keyboard_arrow_down</span></button>'
+        . '<div class="nav-cat svelte-1wxfnil"><a href="' . $trial . '">Chương trình thử nghiệm</a></div>'
+        . '<div class="nav-cat svelte-1wxfnil"><a href="' . $pricing . '">Bảng giá</a></div>'
+        . '</div>'
+        . '<a href="' . $demo . '"><button class="svelte-1v3bb8g">Đặt lịch demo</button></a>'
+        . '</div>'
+        . '<div class="subnav svelte-1wxfnil">'
+        . '<div class="dropdown-content svelte-1wxfnil">'
+        . '<div class="dropdown-cat svelte-1wxfnil">'
+        . '<h4><span class="material-symbols-outlined svelte-1wxfnil">robot</span>Sản phẩm</h4>'
+        . '<a href="' . esc_url(home_url('/tools/Iristick.G3/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G3<span class="beta svelte-1wxfnil">MỚI</span></div><span>Kính thông minh thế hệ mới đa năng.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/tools/Iristick.G2-PRO/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G2 PRO</div><span>Kính thông minh công nghiệp bền bỉ.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/tools/Iristick.H1/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H1</div><span>Kính thông minh gắn mũ bảo hộ.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/tools/Iristick.H3/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H3<span class="comingsoon svelte-1wxfnil">Sắp ra mắt</span></div><span>Thế hệ kính thông minh hạng nặng tiếp theo.</span></div></a>'
+        . '</div>'
+        . '<div class="dropdown-cat svelte-1wxfnil">'
+        . '<h4><span class="material-symbols-outlined svelte-1wxfnil">devices</span>Công cụ</h4>'
+        . '<a href="' . esc_url(home_url('/products/Iristick.Collector/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Collector</div><span>Thu thập dữ liệu tốc độ cao, khối lượng lớn.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/products/Iristick.Teams/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Teams</div><span>Gọi video call qua Microsoft Teams.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/products/Iristick.Assist/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Assist</div><span>Gọi video nhanh, hỗ trợ từ xa tức thì.</span></div></a>'
+        . '</div>'
+        . '<div class="dropdown-cat svelte-1wxfnil">'
+        . '<h4><span class="material-symbols-outlined svelte-1wxfnil">code</span>Nhà phát triển</h4>'
+        . '<a href="' . esc_url(home_url('/developers/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.SDK</div><span>Tự phát triển ứng dụng kính thông minh.</span></div></a>'
+        . '</div>'
+        . '<div class="dropdown-cat svelte-1wxfnil">'
+        . '<h4><span class="material-symbols-outlined svelte-1wxfnil">handshake</span>Đối tác</h4>'
+        . '<a href="' . esc_url(home_url('/partners/Icona/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Acty by Icona</div><span>Nền tảng hỗ trợ từ xa chuyên gia.</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '<div class="dropdown-content svelte-1wxfnil">'
+        . '<div class="dropdown-cat svelte-1wxfnil">'
+        . '<h4><span class="material-symbols-outlined svelte-1wxfnil">support_agent</span>Hỗ trợ</h4>'
+        . '<a target="_blank" rel="noopener noreferrer" href="https://docs.iristick.com"><div class="dropdown-topic svelte-1wxfnil"><div>Trung tâm kiến thức</div><span>Tài liệu kỹ thuật và hướng dẫn sử dụng.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/support/faqs/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Câu hỏi thường gặp</div><span>Giải đáp các thắc mắc phổ biến.</span></div></a>'
+        . '</div>'
+        . '<div class="dropdown-cat svelte-1wxfnil">'
+        . '<h4><span class="material-symbols-outlined svelte-1wxfnil">meeting_room</span>Công ty</h4>'
+        . '<a href="' . esc_url(home_url('/company/about-us/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Về chúng tôi</div><span>Tìm hiểu về Iristick Việt Nam.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/company/careers/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Tuyển dụng</div><span>Gia nhập đội ngũ Iristick.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/enterprise/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Doanh nghiệp</div><span>Giải pháp quy mô lớn cho doanh nghiệp.</span></div></a>'
+        . '</div>'
+        . '<div class="dropdown-cat svelte-1wxfnil">'
+        . '<h4><span class="material-symbols-outlined svelte-1wxfnil">article</span>Blog</h4>'
+        . '<a href="' . esc_url(home_url('/blog/news/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Tin tức</div><span>Cập nhật bài viết và sự kiện mới nhất.</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '<div class="dropdown-content svelte-1wxfnil">'
+        . '<div class="dropdown-cat svelte-1wxfnil">'
+        . '<h4><span class="material-symbols-outlined svelte-1wxfnil">factory</span>Ngành nghề</h4>'
+        . '<a href="' . esc_url(home_url('/industries/agriculture/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Nông nghiệp</div><span>Kiểm tra thực địa và nông nghiệp chính xác.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/industries/healthcare/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Chăm sóc sức khỏe</div><span>Hỗ trợ khám bệnh và phẫu thuật từ xa.</span></div></a>'
+        . '<a href="' . esc_url(home_url('/industries/field-service/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Dịch vụ hiện trường</div><span>Chẩn đoán và bảo trì kỹ thuật từ xa.</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '</div>'
+        . '</nav>'
+        . '<nav class="mobile svelte-1wxfnil">'
+        . '<div class="mobile-nav-header svelte-1wxfnil">'
+        . '<div class="nav-logo svelte-1wxfnil"><a href="' . $home . '"><picture><img src="' . esc_url($logo) . '" alt="logo Iristick" class="svelte-1wxfnil"></picture></a></div>'
+        . '<button class="mobile-menu-button svelte-1wxfnil" type="button" aria-label="Mở menu"><span class="material-symbols-outlined svelte-1wxfnil">menu</span></button>'
+        . '</div>'
+        . '<div class="mobile-menu svelte-1wxfnil">'
+        . '<div class="menu-topic">'
+        . '<div class="nav-cat products svelte-1wxfnil">Sản phẩm <span class="material-symbols-outlined svelte-1wxfnil">keyboard_arrow_down</span></div>'
+        . '<div class="nav-cat-subnav svelte-1wxfnil">'
+        . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
+        . '<span class="topic-title svelte-1wxfnil">Sản phẩm</span>'
+        . '<div class="topic-content svelte-1wxfnil">'
+        . '<a href="' . esc_url(home_url('/tools/Iristick.G3/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G3<span class="beta svelte-1wxfnil">MỚI</span></div><span>Kính thông minh thế hệ mới</span></div></a>'
+        . '<a href="' . esc_url(home_url('/tools/Iristick.G2-PRO/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G2 PRO</div><span>Kính thông minh công nghiệp bền bỉ</span></div></a>'
+        . '<a href="' . esc_url(home_url('/tools/Iristick.H1/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H1</div><span>Kính gắn mũ bảo hộ</span></div></a>'
+        . '<a href="' . esc_url(home_url('/tools/Iristick.H3/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H3<span class="comingsoon svelte-1wxfnil">Sắp ra mắt</span></div><span>Kính hạng nặng thế hệ mới</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
+        . '<span class="topic-title svelte-1wxfnil">Công cụ</span>'
+        . '<div class="topic-content svelte-1wxfnil">'
+        . '<a href="' . esc_url(home_url('/products/Iristick.Collector/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Collector</div><span>Thu thập dữ liệu tốc độ cao</span></div></a>'
+        . '<a href="' . esc_url(home_url('/products/Iristick.Teams/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Teams</div><span>Video call qua Microsoft Teams</span></div></a>'
+        . '<a href="' . esc_url(home_url('/products/Iristick.Assist/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Assist</div><span>Hỗ trợ chuyên gia tức thì</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
+        . '<span class="topic-title svelte-1wxfnil">Nhà phát triển</span>'
+        . '<div class="topic-content svelte-1wxfnil">'
+        . '<a href="' . esc_url(home_url('/developers/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.SDK</div><span>Bộ phát triển ứng dụng SDK</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
+        . '<span class="topic-title svelte-1wxfnil">Đối tác</span>'
+        . '<div class="topic-content svelte-1wxfnil">'
+        . '<a href="' . esc_url(home_url('/partners/Icona/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Acty by Icona</div><span>Hỗ trợ từ xa chuyên gia</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '</div>'
+        . '</div>'
+        . '<div class="menu-topic">'
+        . '<div class="nav-cat resources svelte-1wxfnil">Tài nguyên <span class="material-symbols-outlined svelte-1wxfnil">keyboard_arrow_down</span></div>'
+        . '<div class="nav-cat-subnav svelte-1wxfnil">'
+        . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
+        . '<span class="topic-title svelte-1wxfnil">Hỗ trợ</span>'
+        . '<div class="topic-content svelte-1wxfnil">'
+        . '<a target="_blank" rel="noopener noreferrer" href="https://docs.iristick.com"><div class="dropdown-topic svelte-1wxfnil"><div>Trung tâm kiến thức</div><span>Tài liệu kỹ thuật</span></div></a>'
+        . '<a href="' . esc_url(home_url('/support/faqs/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Câu hỏi thường gặp</div><span>Hỏi đáp phổ biến</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
+        . '<span class="topic-title svelte-1wxfnil">Công ty</span>'
+        . '<div class="topic-content svelte-1wxfnil">'
+        . '<a href="' . esc_url(home_url('/company/about-us/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Về chúng tôi</div><span>Tầm nhìn & sứ mệnh</span></div></a>'
+        . '<a href="' . esc_url(home_url('/company/careers/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Tuyển dụng</div><span>Cơ hội nghề nghiệp</span></div></a>'
+        . '<a href="' . esc_url(home_url('/enterprise/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Doanh nghiệp</div><span>Giải pháp quy mô lớn</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
+        . '<span class="topic-title svelte-1wxfnil">Blog</span>'
+        . '<div class="topic-content svelte-1wxfnil">'
+        . '<a href="' . esc_url(home_url('/blog/news/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Tin tức</div><span>Bài viết & cập nhật mới</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '</div>'
+        . '</div>'
+        . '<div class="menu-topic">'
+        . '<div class="nav-cat industries svelte-1wxfnil">Ngành nghề <span class="material-symbols-outlined svelte-1wxfnil">keyboard_arrow_down</span></div>'
+        . '<div class="nav-cat-subnav svelte-1wxfnil">'
+        . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
+        . '<span class="topic-title svelte-1wxfnil">Lĩnh vực</span>'
+        . '<div class="topic-content svelte-1wxfnil">'
+        . '<a href="' . esc_url(home_url('/industries/agriculture/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Nông nghiệp</div><span>Giải pháp thực địa</span></div></a>'
+        . '<a href="' . esc_url(home_url('/industries/healthcare/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Chăm sóc sức khỏe</div><span>Y tế & khám từ xa</span></div></a>'
+        . '<a href="' . esc_url(home_url('/industries/field-service/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Dịch vụ hiện trường</div><span>Bảo trì kỹ thuật</span></div></a>'
+        . '</div>'
+        . '</div>'
+        . '</div>'
+        . '</div>'
+        . '<div class="nav-cat svelte-1wxfnil"><a href="' . $trial . '">Chương trình thử nghiệm</a></div>'
+        . '<div class="nav-cat svelte-1wxfnil"><a href="' . $pricing . '">Bảng giá</a></div>'
+        . '<div class="mobile-demo-cta" style="width:100%;max-width:100%;box-sizing:border-box;padding:14px 14px 20px;margin:0;border:none;"><a href="' . $demo . '" style="display:flex;align-items:center;justify-content:center;width:100%;max-width:100%;box-sizing:border-box;min-height:48px;padding:12px 16px;border-radius:12px;background:#17171c;color:#ffffff;font-size:16px;font-weight:700;text-align:center;text-decoration:none;box-shadow:0 4px 12px rgba(23,23,28,0.15);white-space:nowrap;margin:0;">Đặt lịch demo</a></div>'
+        . '</div>'
+        . '</nav>'
+        . '</div>';
+}
 
 function iristick_site_footer_html() {
     $logo = IRISTICK_STATIC_URI . '/assets/images/iristick-logo.webp';
@@ -2057,14 +2215,20 @@ function iristick_static_rewrite_url($url, $file) {
         );
     }
 
+    $page_path = preg_replace('#(?:/)?index\.html?$#i', '', $relative);
+    $page_path = preg_replace('/\.html?$/i', '', $page_path);
+
+    // Any HTML page route must link directly to its clean WordPress URL
+    if (preg_match('/\.html?$/i', $relative) || preg_match('#(?:/)?index\.html?$#i', $relative)) {
+        return home_url('/' . trim($page_path, '/') . '/') . $query . $fragment;
+    }
+
     $disk_relative = rawurldecode($relative);
     $disk_path = iristick_static_root() . '/' . str_replace('/', DIRECTORY_SEPARATOR, $disk_relative);
     if (is_file($disk_path)) {
         return IRISTICK_STATIC_URI . '/static/' . $relative . $query . $fragment;
     }
 
-    $page_path = preg_replace('#(?:/)?index\.html?$#i', '', $relative);
-    $page_path = preg_replace('/\.html?$/i', '', $page_path);
     return home_url('/' . trim($page_path, '/') . '/') . $query . $fragment;
 }
 
@@ -2190,6 +2354,9 @@ function iristick_static_render($file) {
         status_header(404);
         return;
     }
+
+    // Replace the captured navigation header with the unified Iristick Việt Nam header.
+    $html = preg_replace('#<div class="navigation-wrapper\b.*?(?:<nav class="mobile\b.*?<\/nav>)\s*<\/div>#is', iristick_site_header_html(), $html);
 
     // Replace the captured footer with the unified Iristick Việt Nam footer.
     $html = preg_replace('#<div class="footer-wrapper\b.*?</footer></div>#is', iristick_site_footer_html(), $html);
