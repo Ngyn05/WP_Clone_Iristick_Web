@@ -675,6 +675,42 @@ add_filter('use_block_editor_for_post', function ($use_block_editor, $post) {
     return $post instanceof WP_Post && $post->post_type === 'post' ? false : $use_block_editor;
 }, 20, 2);
 
+// Standardize Yoast SEO titles to always end with '| Iristick Việt Nam'
+add_filter('wpseo_title', function ($title) {
+    if (trim($title) === '') {
+        return '';
+    }
+    // Remove existing suffix to avoid double suffixing
+    $clean_title = preg_replace('/\s*\|\s*Iristick(?:\s+(?:Việt Nam|VN))?\s*$/iu', '', $title);
+    return trim($clean_title) . ' | Iristick Việt Nam';
+}, 30);
+
+// Exclude non-content WooCommerce utility pages (cart, checkout, my-account) from XML Sitemap
+add_filter('wpseo_exclude_from_sitemap_by_post_ids', function ($excluded_ids) {
+    $cart_id = get_option('woocommerce_cart_page_id');
+    $checkout_id = get_option('woocommerce_checkout_page_id');
+    $myaccount_id = get_option('woocommerce_myaccount_page_id');
+    
+    if ($cart_id) {
+        $excluded_ids[] = (int) $cart_id;
+    }
+    if ($checkout_id) {
+        $excluded_ids[] = (int) $checkout_id;
+    }
+    if ($myaccount_id) {
+        $excluded_ids[] = (int) $myaccount_id;
+    }
+    return array_unique(array_filter($excluded_ids));
+});
+
+// Set noindex meta tag on WooCommerce utility pages (cart, checkout, my-account)
+add_filter('wpseo_robots', function ($robots) {
+    if (function_exists('is_cart') && (is_cart() || is_checkout() || is_account_page())) {
+        return 'noindex,follow';
+    }
+    return $robots;
+});
+
 add_action('add_meta_boxes_post', function () {
     remove_meta_box('postimagediv', 'post', 'side');
     add_meta_box('postimagediv', 'Ảnh đại diện', 'post_thumbnail_meta_box', 'post', 'normal', 'high');
@@ -779,12 +815,356 @@ function iristick_import_static_pages_to_database() {
         ));
         if (!is_wp_error($post_id)) {
             update_post_meta($post_id, '_iristick_static_path', $path);
+            // Pre-seed Yoast SEO titles and meta descriptions into the database
+            update_post_meta($post_id, '_yoast_wpseo_title', $title);
+            
+            // Extract a clean snippet for description or fall back to a standard default
+            $desc = '';
+            if ($excerpt !== '') {
+                $desc = $excerpt;
+            } elseif (preg_match('#<p\b[^>]*>(.*?)</p>#is', $content, $p_match)) {
+                $desc = trim(wp_strip_all_tags($p_match[1]));
+            }
+            if ($desc !== '') {
+                $desc = wp_html_excerpt($desc, 155, '…');
+                update_post_meta($post_id, '_yoast_wpseo_metadesc', $desc);
+            }
         }
     }
     update_option('iristick_static_pages_imported_v1', current_time('mysql'), false);
     delete_option('iristick_static_pages_import_lock_v1');
 }
 add_action('init', 'iristick_import_static_pages_to_database', 32);
+
+// Upgrade migration: write Yoast SEO default values directly to database for already imported pages, posts, and products
+function iristick_migrate_yoast_seo_db_values() {
+    if (get_option('iristick_yoast_seo_db_seeded_v14')) {
+        return;
+    }
+
+    // Comprehensive dictionary of high-ranking, concise Vietnamese SEO titles, focus keyphrases & optimal descriptions (120-145 chars)
+    $seo_data = array(
+        // News Posts
+        'webinar-hands-free-microsoft-teams-iristick' => array(
+            'kw' => 'Microsoft Teams trên kính thông minh',
+            'title' => 'Họp Microsoft Teams trên kính Iristick',
+            'desc' => 'Giải pháp họp Microsoft Teams rảnh tay bằng giọng nói trên kính thông minh Iristick giúp chuyên gia hỗ trợ kỹ thuật viên từ xa.',
+        ),
+        'vr-ar-xr-difference' => array(
+            'kw' => 'phân biệt VR AR XR',
+            'title' => 'Phân biệt thực tế ảo VR AR và XR',
+            'desc' => 'Tìm hiểu sự khác biệt giữa công nghệ thực tế ảo VR, AR và XR cùng các ứng dụng thực tế của kính thông minh trong công nghiệp.',
+        ),
+        'agrifood-professionals-benefit-from-smartglasses' => array(
+            'kw' => 'kính thông minh nông nghiệp',
+            'title' => 'Kính thông minh trong nông nghiệp',
+            'desc' => 'Ứng dụng kính thông minh Iristick giúp chuyên gia nông nghiệp và thực phẩm thu thập dữ liệu hiện trường chính xác và nhanh chóng.',
+        ),
+        'also-and-iristick-smart-glasses-extend-partnership' => array(
+            'kw' => 'ALSO và Iristick',
+            'title' => 'ALSO và Iristick mở rộng hợp tác',
+            'desc' => 'ALSO và Iristick hợp tác chiến lược mở rộng mạng lưới phân phối kính thông minh công nghiệp và giải pháp hỗ trợ từ xa.',
+        ),
+        'challenges-of-field-service-operations-during-summer-holidays-and-how-to-tackle-them' => array(
+            'kw' => 'dịch vụ hiện trường mùa hè',
+            'title' => 'Vận hành dịch vụ hiện trường mùa hè',
+            'desc' => 'Giải pháp tối ưu hóa hoạt động dịch vụ hiện trường và khắc phục sự cố từ xa trong kỳ nghỉ với kính thông minh Iristick.',
+        ),
+        'iristick-announces-major-capital-increase' => array(
+            'kw' => 'Iristick tăng vốn',
+            'title' => 'Iristick công bố tăng vốn phát triển',
+            'desc' => 'Iristick tăng vốn đầu tư nhằm mở rộng phát triển kính thông minh công nghiệp và các ứng dụng hỗ trợ rảnh tay doanh nghiệp.',
+        ),
+        'iristick-distribution-agreement-capestone' => array(
+            'kw' => 'Iristick Capestone',
+            'title' => 'Iristick hợp tác cùng Capestone',
+            'desc' => 'Iristick ký thỏa thuận phân phối cùng Capestone nhằm mở rộng thị trường kính thông minh chuyên dụng tại Châu Âu và toàn cầu.',
+        ),
+        'join-webinar-hands-free-remote-assistance-smart-glasses-hazardous-areas' => array(
+            'kw' => 'hỗ trợ từ xa khu vực nguy hiểm',
+            'title' => 'Hỗ trợ từ xa tại khu vực nguy hiểm',
+            'desc' => 'Webinar chia sẻ giải pháp hỗ trợ từ xa rảnh tay bằng kính thông minh Iristick tại các môi trường công nghiệp nguy hiểm.',
+        ),
+        'microsoft-teams-on-iristick-available-on-smart-glasses' => array(
+            'kw' => 'Microsoft Teams kính Iristick',
+            'title' => 'Microsoft Teams trên kính Iristick',
+            'desc' => 'Trải nghiệm ứng dụng Microsoft Teams trên kính thông minh Iristick giúp gọi video và trao đổi công việc rảnh tay hiệu quả.',
+        ),
+        'second-generation-smart-glasses-iristick' => array(
+            'kw' => 'kính thông minh Iristick thế hệ 2',
+            'title' => 'Kính thông minh Iristick thế hệ 2',
+            'desc' => 'Khám phá thế hệ kính thông minh Iristick thứ hai với camera zoom quang học vượt trội và khả năng tương thích môi trường khắt khe.',
+        ),
+        'tackle-business-travel-emissions' => array(
+            'kw' => 'giảm phát thải công tác',
+            'title' => 'Giảm phát thải từ các chuyến công tác',
+            'desc' => 'Cắt giảm khí thải carbon và chi phí đi lại nhờ áp dụng kính thông minh Iristick cho hoạt động kiểm tra và bảo trì từ xa.',
+        ),
+        'webinar-handtmann-icona' => array(
+            'kw' => 'Webinar Handtmann Icona',
+            'title' => 'Webinar cùng Handtmann và Icona',
+            'desc' => 'Hội thảo trực tuyến chia sẻ kinh nghiệm ứng dụng kính thông minh Iristick nâng cao năng suất và bảo trì thiết bị tối ưu.',
+        ),
+
+        // Static Pages
+        'index' => array(
+            'kw' => 'kính thông minh công nghiệp',
+            'title' => 'Kính thông minh công nghiệp',
+            'desc' => 'Iristick cung cấp kính thông minh công nghiệp và giải pháp hỗ trợ từ xa rảnh tay hàng đầu cho doanh nghiệp tại Việt Nam.',
+        ),
+        'pricing' => array(
+            'kw' => 'bảng giá kính thông minh',
+            'title' => 'Bảng giá kính thông minh Iristick',
+            'desc' => 'Xem bảng giá chi tiết các dòng kính thông minh Iristick G2 PRO, G3, H1 và các gói phần mềm hỗ trợ từ xa doanh nghiệp.',
+        ),
+        'book-demo' => array(
+            'kw' => 'đặt lịch demo Iristick',
+            'title' => 'Đặt lịch trải nghiệm kính Iristick',
+            'desc' => 'Đăng ký đặt lịch demo trực tiếp để trải nghiệm giải pháp kính thông minh và phần mềm hỗ trợ từ xa Iristick Việt Nam.',
+        ),
+        'trial-program' => array(
+            'kw' => 'dùng thử kính thông minh',
+            'title' => 'Chương trình dùng thử kính Iristick',
+            'desc' => 'Tìm hiểu chương trình trải nghiệm dùng thử kính thông minh Iristick trong 6 tuần để đánh giá hiệu quả cho doanh nghiệp.',
+        ),
+        'trial-order' => array(
+            'kw' => 'đăng ký dùng thử Iristick',
+            'title' => 'Đăng ký dùng thử kính Iristick',
+            'desc' => 'Điền thông tin đăng ký chương trình dùng thử 6 tuần kính thông minh Iristick và nhận thiết bị trải nghiệm thực tế.',
+        ),
+        'enterprise' => array(
+            'kw' => 'giải pháp doanh nghiệp Iristick',
+            'title' => 'Giải pháp kính thông minh doanh nghiệp',
+            'desc' => 'Giải pháp kính thông minh toàn diện cho doanh nghiệp giúp nâng cao hiệu suất làm việc hiện trường và đào tạo nhân sự.',
+        ),
+        'developers' => array(
+            'kw' => 'SDK kính thông minh Iristick',
+            'title' => 'SDK cho nhà phát triển Iristick',
+            'desc' => 'Bộ công cụ SDK và tài liệu kỹ thuật dành cho nhà phát triển ứng dụng Android trên nền tảng kính thông minh Iristick.',
+        ),
+        'contact' => array(
+            'kw' => 'liên hệ Iristick Việt Nam',
+            'title' => 'Liên hệ Iristick Việt Nam',
+            'desc' => 'Liên hệ đội ngũ Iristick Việt Nam để được tư vấn thiết bị kính thông minh, giải pháp phần mềm và báo giá doanh nghiệp.',
+        ),
+        'sitemap' => array(
+            'kw' => 'sơ đồ trang Iristick',
+            'title' => 'Sơ đồ trang Iristick Việt Nam',
+            'desc' => 'Tổng hợp toàn bộ liên kết trang giới thiệu, sản phẩm, ngành nghề và tài liệu hỗ trợ trên website Iristick Việt Nam.',
+        ),
+        'company/about-us' => array(
+            'kw' => 'về Iristick',
+            'title' => 'Về chúng tôi Iristick Việt Nam',
+            'desc' => 'Tìm hiểu về sứ mệnh, tầm nhìn và công nghệ kính thông minh hàng đầu thế giới của Iristick dành cho công nghiệp.',
+        ),
+        'company/careers' => array(
+            'kw' => 'tuyển dụng Iristick',
+            'title' => 'Cơ hội nghề nghiệp tại Iristick',
+            'desc' => 'Khám phá các cơ hội nghề nghiệp hấp dẫn và gia nhập đội ngũ phát triển công nghệ kính thông minh Iristick tại Việt Nam.',
+        ),
+        'industries/agriculture' => array(
+            'kw' => 'kính thông minh nông nghiệp',
+            'title' => 'Kính thông minh ngành nông nghiệp',
+            'desc' => 'Giải pháp kính thông minh rảnh tay giúp đánh giá kiểu hình cây trồng và số hóa quy trình nghiên cứu nông nghiệp.',
+        ),
+        'industries/field-service' => array(
+            'kw' => 'dịch vụ hiện trường rảnh tay',
+            'title' => 'Kính thông minh dịch vụ hiện trường',
+            'desc' => 'Hỗ trợ kỹ thuật viên hiện trường kết nối trực tiếp với chuyên gia văn phòng qua video call rảnh tay độ nét cao.',
+        ),
+        'industries/healthcare' => array(
+            'kw' => 'kính thông minh y tế',
+            'title' => 'Kính thông minh chăm sóc y tế',
+            'desc' => 'Hỗ trợ y bác sĩ khám chữa bệnh từ xa, hội chẩn chuyên môn và đào tạo y khoa trực quan với kính thông minh Iristick.',
+        ),
+        'partners/Icona' => array(
+            'kw' => 'đối tác Icona Iristick',
+            'title' => 'Đối tác phần mềm Icona Acty',
+            'desc' => 'Giải pháp phần mềm hỗ trợ từ xa Acty của Icona tích hợp hoàn hảo trên kính thông minh Iristick cho doanh nghiệp.',
+        ),
+        'products/Iristick.Assist' => array(
+            'kw' => 'phần mềm Iristick Assist',
+            'title' => 'Phần mềm Iristick Assist',
+            'desc' => 'Phần mềm hỗ trợ từ xa chuyên dụng giúp truyền hình ảnh trực tiếp, đánh dấu màn hình và tương tác 2 chiều liền mạch.',
+        ),
+        'products/Iristick.Collector' => array(
+            'kw' => 'phần mềm Iristick Collector',
+            'title' => 'Phần mềm Iristick Collector',
+            'desc' => 'Ứng dụng thu thập dữ liệu hiện trường và nhận diện mã vạch tốc độ cao hoàn toàn rảnh tay trên kính Iristick.',
+        ),
+        'products/Iristick.Teams' => array(
+            'kw' => 'Microsoft Teams Iristick',
+            'title' => 'Iristick cho Microsoft Teams',
+            'desc' => 'Tích hợp Microsoft Teams trực tiếp lên kính thông minh Iristick cho phép gọi video và chia sẻ góc nhìn rảnh tay.',
+        ),
+        'tools/Iristick.G2-PRO' => array(
+            'kw' => 'kính thông minh Iristick G2 PRO',
+            'title' => 'Kính thông minh Iristick G2 PRO',
+            'desc' => 'Kính thông minh công nghiệp cao cấp với camera kép 16MP, zoom quang học 6x và màn hình hiển thị trước mắt sắc nét.',
+        ),
+        'tools/Iristick.G3' => array(
+            'kw' => 'kính thông minh Iristick G3',
+            'title' => 'Kính thông minh Iristick G3',
+            'desc' => 'Dòng kính thông minh thế hệ mới siêu nhẹ, kết nối USB-C trực tiếp với điện thoại Android và camera góc rộng 16MP.',
+        ),
+        'tools/Iristick.H1' => array(
+            'kw' => 'kính Iristick H1 gắn mũ bảo hiểm',
+            'title' => 'Kính thông minh Iristick H1',
+            'desc' => 'Thiết bị kính thông minh gắn trực tiếp lên mũ bảo hộ lao động, đạt chuẩn an toàn cao cho môi trường xây dựng và dầu khí.',
+        ),
+        'tools/Iristick.H3' => array(
+            'kw' => 'kính Iristick H3',
+            'title' => 'Kính thông minh Iristick H3',
+            'desc' => 'Kính thông minh gắn mũ bảo hộ thế hệ mới tối ưu trọng lượng và tích hợp camera zoom quang học cho công trường.',
+        ),
+        'support/faqs' => array(
+            'kw' => 'câu hỏi thường gặp Iristick',
+            'title' => 'Câu hỏi thường gặp về Iristick',
+            'desc' => 'Giải đáp mọi thắc mắc về phần cứng, phần mềm, cách kết nối và chính sách bảo hành kính thông minh Iristick.',
+        ),
+        'policies/cookie-policy' => array(
+            'kw' => 'chính sách cookie Iristick',
+            'title' => 'Chính sách Cookie Iristick Việt Nam',
+            'desc' => 'Thông tin chi tiết về việc sử dụng cookie và công nghệ theo dõi nhằm cải thiện trải nghiệm người dùng trên website.',
+        ),
+        'policies/privacy-policy' => array(
+            'kw' => 'chính sách bảo mật Iristick',
+            'title' => 'Chính sách bảo mật thông tin',
+            'desc' => 'Cam kết bảo mật dữ liệu cá nhân, thông tin liên hệ và quyền riêng tư của khách hàng khi sử dụng dịch vụ Iristick.',
+        ),
+        'policies/terms-conditions' => array(
+            'kw' => 'điều khoản điều kiện Iristick',
+            'title' => 'Điều khoản và điều kiện sử dụng',
+            'desc' => 'Các quy định, điều khoản sử dụng website, quyền sở hữu trí tuệ và chính sách giao dịch của Iristick Việt Nam.',
+        ),
+        'blog/news' => array(
+            'kw' => 'tin tức kính thông minh',
+            'title' => 'Tin tức và sự kiện Iristick',
+            'desc' => 'Cập nhật các tin tức công nghệ mới nhất, sự kiện hội thảo và ứng dụng thực tế của kính thông minh Iristick.',
+        ),
+        'shop' => array(
+            'kw' => 'cửa hàng kính thông minh',
+            'title' => 'Cửa hàng thiết bị và phần mềm',
+            'desc' => 'Mua sắm kính thông minh Iristick, phụ kiện chính hãng và các gói phần mềm hỗ trợ từ xa doanh nghiệp uy tín.',
+        ),
+        'cart' => array(
+            'kw' => 'giỏ hàng Iristick',
+            'title' => 'Giỏ hàng của bạn',
+            'desc' => 'Kiểm tra danh sách thiết bị kính thông minh và phần mềm Iristick trong giỏ hàng trước khi tiến hành thanh toán.',
+        ),
+        'checkout' => array(
+            'kw' => 'thanh toán Iristick',
+            'title' => 'Thanh toán đơn hàng',
+            'desc' => 'Hoàn tất thông tin giao hàng và thanh toán an toàn các sản phẩm kính thông minh Iristick chính hãng tại Việt Nam.',
+        ),
+        'my-account' => array(
+            'kw' => 'tài khoản Iristick',
+            'title' => 'Tài khoản khách hàng',
+            'desc' => 'Quản lý thông tin tài khoản cá nhân, lịch sử đơn hàng và trạng thái giấy phép phần mềm kính thông minh Iristick.',
+        ),
+        'company' => array(
+            'kw' => 'công ty Iristick',
+            'title' => 'Thông tin công ty Iristick',
+            'desc' => 'Tìm hiểu tổng quan về công ty Iristick, đội ngũ nhân sự, giá trị cốt lõi và các cơ hội hợp tác kinh doanh.',
+        ),
+        'industries' => array(
+            'kw' => 'ngành nghề ứng dụng Iristick',
+            'title' => 'Giải pháp theo ngành nghề',
+            'desc' => 'Khám phá các giải pháp kính thông minh được tùy biến tối ưu cho từng ngành sản xuất, nông nghiệp và y tế.',
+        ),
+        'partners' => array(
+            'kw' => 'đối tác Iristick',
+            'title' => 'Mạng lưới đối tác toàn cầu',
+            'desc' => 'Hệ sinh thái đối tác phần mềm và nhà phân phối chiến lược của Iristick trên toàn cầu và tại Việt Nam.',
+        ),
+        'policies' => array(
+            'kw' => 'chính sách Iristick',
+            'title' => 'Chính sách và quy định',
+            'desc' => 'Tổng hợp các điều khoản dịch vụ, chính sách bảo mật thông tin và bảo hành sản phẩm của Iristick Việt Nam.',
+        ),
+        'support' => array(
+            'kw' => 'hỗ trợ Iristick',
+            'title' => 'Trung tâm hỗ trợ khách hàng',
+            'desc' => 'Tài liệu hướng dẫn sử dụng, giải đáp thắc mắc và hỗ trợ kỹ thuật chuyên sâu cho kính thông minh Iristick.',
+        ),
+    );
+
+    $suffix = ' | Iristick Việt Nam';
+
+    // 1. Static Pages & System Pages
+    $pages = get_posts(array(
+        'post_type' => 'page',
+        'post_status' => 'any',
+        'numberposts' => -1,
+    ));
+    foreach ($pages as $page) {
+        $static_path = get_post_meta($page->ID, '_iristick_static_path', true);
+        $slug = $page->post_name;
+        if ($static_path && isset($seo_data[$static_path])) {
+            update_post_meta($page->ID, '_yoast_wpseo_title', $seo_data[$static_path]['title'] . $suffix);
+            update_post_meta($page->ID, '_yoast_wpseo_focuskw', $seo_data[$static_path]['kw']);
+            update_post_meta($page->ID, '_yoast_wpseo_metadesc', $seo_data[$static_path]['desc']);
+        } elseif (isset($seo_data[$slug])) {
+            update_post_meta($page->ID, '_yoast_wpseo_title', $seo_data[$slug]['title'] . $suffix);
+            update_post_meta($page->ID, '_yoast_wpseo_focuskw', $seo_data[$slug]['kw']);
+            update_post_meta($page->ID, '_yoast_wpseo_metadesc', $seo_data[$slug]['desc']);
+        } else {
+            $raw_title = preg_replace('/\s*\|\s*Iristick(?:\s+(?:Việt Nam|VN))?\s*$/iu', '', $page->post_title);
+            $clean_title = wp_html_excerpt($raw_title, 35, '');
+            update_post_meta($page->ID, '_yoast_wpseo_title', $clean_title . $suffix);
+            update_post_meta($page->ID, '_yoast_wpseo_focuskw', $clean_title);
+            $desc = $page->post_excerpt ?: wp_strip_all_tags($page->post_content);
+            $clean_desc = wp_html_excerpt($desc, 135, '');
+            if ($clean_desc === '') {
+                $clean_desc = sprintf('Thông tin chi tiết về %s trên hệ thống chính thức của Iristick Việt Nam.', $clean_title);
+            }
+            update_post_meta($page->ID, '_yoast_wpseo_metadesc', $clean_desc);
+        }
+    }
+
+    // 2. Posts (Tin tức)
+    $posts = get_posts(array(
+        'post_type' => 'post',
+        'post_status' => 'any',
+        'numberposts' => -1,
+    ));
+    foreach ($posts as $post) {
+        $slug = $post->post_name;
+        if (isset($seo_data[$slug])) {
+            update_post_meta($post->ID, '_yoast_wpseo_title', $seo_data[$slug]['title'] . $suffix);
+            update_post_meta($post->ID, '_yoast_wpseo_focuskw', $seo_data[$slug]['kw']);
+            update_post_meta($post->ID, '_yoast_wpseo_metadesc', $seo_data[$slug]['desc']);
+        } else {
+            // Fallback: build clean, concise title and description
+            $title = preg_replace('/\s*\|\s*Iristick(?:\s+(?:Việt Nam|VN))?\s*$/iu', '', $post->post_title);
+            $clean_title = wp_html_excerpt($title, 38, '');
+            update_post_meta($post->ID, '_yoast_wpseo_title', $clean_title . $suffix);
+            update_post_meta($post->ID, '_yoast_wpseo_focuskw', $clean_title);
+            $desc = $post->post_excerpt ?: wp_strip_all_tags($post->post_content);
+            $clean_desc = wp_html_excerpt($desc, 135, '');
+            update_post_meta($post->ID, '_yoast_wpseo_metadesc', $clean_desc);
+        }
+    }
+
+    // 3. Products
+    $products = get_posts(array(
+        'post_type' => 'product',
+        'post_status' => 'any',
+        'numberposts' => -1,
+    ));
+    foreach ($products as $product) {
+        $title = preg_replace('/\s*\|\s*Iristick(?:\s+(?:Việt Nam|VN))?\s*$/iu', '', $product->post_title);
+        $clean_title = wp_html_excerpt($title, 35, '');
+        update_post_meta($product->ID, '_yoast_wpseo_title', $clean_title . $suffix);
+        update_post_meta($product->ID, '_yoast_wpseo_focuskw', $clean_title);
+        $desc = $product->post_excerpt ?: wp_strip_all_tags($product->post_content);
+        $clean_desc = wp_html_excerpt($desc, 135, '');
+        update_post_meta($product->ID, '_yoast_wpseo_metadesc', $clean_desc);
+    }
+
+    update_option('iristick_yoast_seo_db_seeded_v14', current_time('mysql'), false);
+}
+add_action('init', 'iristick_migrate_yoast_seo_db_values', 35);
 
 function iristick_remove_duplicate_imported_pages_v1() {
     if (get_option('iristick_duplicate_imported_pages_cleaned_v1')) {
