@@ -32,6 +32,17 @@ $faqs = (array) $product->get_meta('_iristick_faq');
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&display=swap">
+    <link rel="stylesheet" href="<?php echo esc_url(IRISTICK_STATIC_URI . '/static/base.css?v=' . IRISTICK_STATIC_VERSION); ?>">
+    <link rel="stylesheet" href="<?php echo esc_url(IRISTICK_STATIC_URI . '/static/_app/immutable/assets/button.Cnk_Ow-q.css?v=' . IRISTICK_STATIC_VERSION); ?>">
+    <link rel="stylesheet" href="<?php echo esc_url(IRISTICK_STATIC_URI . '/static/_app/immutable/assets/0.D44dWdpH.css?v=' . IRISTICK_STATIC_VERSION); ?>">
+    <link rel="stylesheet" href="<?php echo esc_url(IRISTICK_STATIC_URI . '/assets/css/responsive.css?v=' . IRISTICK_STATIC_VERSION); ?>">
+    <link rel="stylesheet" href="<?php echo esc_url(IRISTICK_STATIC_URI . '/assets/css/woocommerce-product.css?v=' . IRISTICK_STATIC_VERSION); ?>">
+
     <?php
     ob_start();
     wp_head();
@@ -47,43 +58,7 @@ $faqs = (array) $product->get_meta('_iristick_faq');
 </head>
 <body <?php body_class('iristick-product-page'); ?>>
 <?php wp_body_open(); ?>
-<header class="iristick-store-header">
-    <a class="iristick-store-logo" href="<?php echo esc_url(home_url('/')); ?>">
-        <img src="<?php echo esc_url(IRISTICK_STATIC_URI . '/assets/images/iristick-logo.webp'); ?>" alt="Iristick Việt Nam">
-    </a>
-    <nav aria-label="Điều hướng chính">
-        <details>
-            <summary>Sản phẩm</summary>
-            <div class="iristick-store-products">
-                <?php foreach (wc_get_products(array('status' => 'publish', 'limit' => -1)) as $menu_product) : ?>
-                    <a href="<?php echo esc_url($menu_product->get_permalink()); ?>">
-                        <strong><?php echo esc_html($menu_product->get_name()); ?></strong>
-                        <small><?php echo esc_html($value_or_na($menu_product->get_short_description())); ?></small>
-                    </a>
-                <?php endforeach; ?>
-            </div>
-        </details>
-        <details>
-            <summary>Tài nguyên</summary>
-            <div class="iristick-store-products iristick-store-resources">
-                <a href="https://docs.iristick.com" target="_blank" rel="noopener noreferrer">
-                    <strong>Trung tâm kiến thức</strong>
-                    <small>Tất cả kiến thức của chúng ta đều có ở đây.</small>
-                </a>
-                <a href="<?php echo esc_url(home_url('/support/faqs/')); ?>">
-                    <strong>Câu hỏi thường gặp</strong>
-                    <small>Có thể câu hỏi của bạn đã được giải đáp tại đây.</small>
-                </a>
-                <a href="<?php echo esc_url(home_url('/blog/news/')); ?>">
-                    <strong>Tin tức</strong>
-                    <small>Cập nhật những thông tin mới nhất từ Iristick.</small>
-                </a>
-            </div>
-        </details>
-        <a href="<?php echo esc_url(home_url('/pricing/')); ?>">Bảng giá</a>
-        <a href="<?php echo esc_url(home_url('/book-demo/')); ?>">Đặt lịch demo</a>
-    </nav>
-</header>
+<?php echo iristick_site_header_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
 <main class="iristick-product-shell">
     <article class="iristick-classic-product">
@@ -95,24 +70,38 @@ $faqs = (array) $product->get_meta('_iristick_faq');
             <?php elseif ($product->get_image_id()) : ?>
                 <?php echo wp_kses_post($product->get_image('full')); ?>
             <?php else : ?>
-                <div class="iristick-product-placeholder"><span>N/A</span><small>Chưa có hình ảnh</small></div>
+                <div class="iristick-product-placeholder"><span>👓</span><small>Chưa có hình ảnh</small></div>
             <?php endif; ?>
         </div>
 
         <section class="iristick-classic-summary">
             <div class="iristick-product-title-row">
                 <h1><?php echo esc_html($product->get_name()); ?></h1>
-                <span>MỚI</span>
+                <span>Chính hãng</span>
             </div>
             <div class="iristick-product-lead"><?php echo esc_html($value_or_na($product->get_short_description())); ?></div>
-            <div class="iristick-product-price"><?php echo $product->get_price_html() ? wp_kses_post($product->get_price_html()) : 'N/A'; ?></div>
+            <div class="iristick-product-price">
+                <?php 
+                if ($product->get_price_html()) {
+                    echo wp_kses_post($product->get_price_html());
+                } elseif ($product->get_price()) {
+                    echo number_format((float) $product->get_price(), 0, ',', '.') . '&nbsp;₫';
+                } else {
+                    echo 'Liên hệ báo giá';
+                }
+                ?>
+            </div>
+            
             <?php if ($product->is_purchasable()) : ?>
                 <div class="iristick-purchase-actions">
                     <a class="iristick-zalo-button" href="https://zalo.me/0917834532" target="_blank" rel="noopener noreferrer">Tư vấn qua Zalo</a>
                     <?php woocommerce_template_single_add_to_cart(); ?>
                 </div>
             <?php else : ?>
-                <a class="iristick-contact-product" href="<?php echo esc_url(home_url('/book-demo/')); ?>">Liên hệ với chúng tôi</a>
+                <div class="iristick-purchase-actions">
+                    <a class="iristick-zalo-button" href="https://zalo.me/0917834532" target="_blank" rel="noopener noreferrer">Tư vấn qua Zalo</a>
+                    <a class="iristick-contact-product" href="<?php echo esc_url(home_url('/book-demo/')); ?>">Đặt lịch Demo</a>
+                </div>
             <?php endif; ?>
 
             <form class="iristick-phone-consultation" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
@@ -132,37 +121,72 @@ $faqs = (array) $product->get_meta('_iristick_faq');
         </section>
 
         <section class="iristick-product-accordions">
-            <details>
+            <details open>
                 <summary>Tính năng chính</summary>
                 <div class="iristick-accordion-content">
-                    <?php if ($features) : ?><div class="iristick-feature-grid"><?php foreach ($features as $label => $feature) : ?><div><strong><?php echo esc_html(is_string($label) ? $label : $feature); ?></strong><?php if (is_string($label)) : ?><p><?php echo esc_html($feature ?: 'N/A'); ?></p><?php endif; ?></div><?php endforeach; ?></div><?php else : ?><p>N/A</p><?php endif; ?>
+                    <?php if ($features) : ?>
+                        <div class="iristick-feature-grid">
+                            <?php foreach ($features as $label => $feature) : ?>
+                                <div>
+                                    <strong><?php echo esc_html(is_string($label) && !is_numeric($label) ? $label : $feature); ?></strong>
+                                    <?php if (is_string($label) && !is_numeric($label) && $feature !== 'N/A') : ?>
+                                        <p><?php echo esc_html($feature); ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else : ?>
+                        <p><?php echo esc_html($value_or_na($product->get_description())); ?></p>
+                    <?php endif; ?>
                 </div>
             </details>
             <details open>
-                <summary>Phụ kiện và thông số</summary>
+                <summary>Phụ kiện và thông số kỹ thuật</summary>
                 <div class="iristick-accordion-content iristick-spec-grid">
-                    <div><strong>Mã sản phẩm</strong><p><?php echo esc_html($value_or_na($product->get_sku())); ?></p></div>
+                    <div><strong>Mã sản phẩm (SKU)</strong><p><?php echo esc_html($value_or_na($product->get_sku())); ?></p></div>
                     <div><strong>Danh mục</strong><p><?php echo esc_html($categories); ?></p></div>
-                    <div><strong>Tình trạng</strong><p><?php echo esc_html($product->is_in_stock() ? 'Còn hàng' : 'Hết hàng'); ?></p></div>
+                    <div><strong>Tình trạng hàng</strong><p><?php echo esc_html($product->is_in_stock() ? 'Còn hàng sẵn sàng giao' : 'Liên hệ đặt trước'); ?></p></div>
                     <?php foreach ($specs as $label => $value) : ?>
-                        <div><strong><?php echo esc_html($label); ?></strong><p><?php echo esc_html($value ?: 'N/A'); ?></p></div>
+                        <?php if ($value && $value !== 'N/A') : ?>
+                            <div><strong><?php echo esc_html($label); ?></strong><p><?php echo esc_html($value); ?></p></div>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                     <?php foreach ($product->get_attributes() as $attribute) : ?>
                         <div><strong><?php echo esc_html(wc_attribute_label($attribute->get_name())); ?></strong><p><?php echo esc_html(implode(', ', $attribute->get_options()) ?: 'N/A'); ?></p></div>
                     <?php endforeach; ?>
                 </div>
             </details>
-            <details>
-                <summary>Tài liệu</summary>
-                <div class="iristick-accordion-content"><?php if ($documents) : ?><ul><?php foreach ($documents as $label => $url) : ?><li><?php if ($url !== 'N/A') : ?><a href="<?php echo esc_url($url); ?>" target="_blank" rel="noopener"><?php echo esc_html($label); ?></a><?php else : ?>N/A<?php endif; ?></li><?php endforeach; ?></ul><?php else : ?><p>N/A</p><?php endif; ?></div>
-            </details>
-            <details>
-                <summary>FAQ</summary>
-                <div class="iristick-accordion-content"><?php if ($faqs) : ?><?php foreach ($faqs as $faq) : ?><h4><?php echo esc_html(isset($faq['question']) ? $faq['question'] : 'N/A'); ?></h4><p><?php echo esc_html(isset($faq['answer']) ? $faq['answer'] : 'N/A'); ?></p><?php endforeach; ?><?php else : ?><p>N/A</p><?php endif; ?></div>
-            </details>
+            <?php if ($documents && !empty(array_filter($documents, function ($v) { return $v !== 'N/A'; }))) : ?>
+                <details>
+                    <summary>Tài liệu & Datasheet tải về</summary>
+                    <div class="iristick-accordion-content">
+                        <ul>
+                            <?php foreach ($documents as $label => $url) : ?>
+                                <?php if ($url !== 'N/A' && $url !== '') : ?>
+                                    <li><a href="<?php echo esc_url($url); ?>" target="_blank" rel="noopener">📄 <?php echo esc_html($label); ?></a></li>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </details>
+            <?php endif; ?>
+            <?php if ($faqs && !empty($faqs)) : ?>
+                <details>
+                    <summary>Câu hỏi thường gặp (FAQ)</summary>
+                    <div class="iristick-accordion-content">
+                        <?php foreach ($faqs as $faq) : ?>
+                            <?php if (!empty($faq['question']) && $faq['question'] !== 'N/A') : ?>
+                                <h4><?php echo esc_html($faq['question']); ?></h4>
+                                <p><?php echo esc_html(isset($faq['answer']) ? $faq['answer'] : 'N/A'); ?></p>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                </details>
+            <?php endif; ?>
         </section>
     </article>
 </main>
+
 <?php echo iristick_site_footer_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <?php wp_footer(); ?>
 </body>

@@ -53,23 +53,30 @@
             if (laptop) { laptop.classList.remove('active'); }
         }
 
-        desktopButtons.forEach(function (button) {
-            var state = stateFromText(button.textContent);
-            var target = dropdowns.find(function (dropdown) { return dropdownState(dropdown) === state; });
+        desktopButtons.forEach(function (button, index) {
+            var state = stateFromText(button.textContent) || navStates[index];
+            var target = dropdowns.find(function (dropdown) { return dropdownState(dropdown) === state; }) || dropdowns[index];
             if (!state || !target) { return; }
             button.setAttribute('aria-haspopup', 'true');
             setExpanded(button, false, state);
             button.addEventListener('click', function (event) {
+                event.preventDefault();
                 event.stopPropagation();
-                var open = button.getAttribute('aria-expanded') === 'true';
+                var open = button.getAttribute('aria-expanded') === 'true' && subnav && subnav.classList.contains('active') && target.classList.contains(state);
                 closeDesktop();
                 if (!open) {
                     target.classList.add(state);
-                    subnav.classList.add('active');
-                    laptop.classList.add('active');
+                    if (subnav) { subnav.classList.add('active'); }
+                    if (laptop) { laptop.classList.add('active'); }
                     setExpanded(button, true, state);
                 }
             });
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!wrapper.contains(event.target)) {
+                closeDesktop();
+            }
         });
 
         var mobileNav = wrapper.querySelector('nav.mobile');
@@ -397,7 +404,7 @@
         ensureQuantityControls();
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function initAll() {
         document.body.classList.remove('iri-preload');
         document.querySelectorAll('.navigation-wrapper').forEach(enhanceNavigation);
         enhanceFaqs();
@@ -407,5 +414,11 @@
         document.querySelectorAll('a[target="_blank"]').forEach(function (link) {
             link.setAttribute('rel', 'noopener noreferrer');
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+        initAll();
+    }
 }());

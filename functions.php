@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('IRISTICK_STATIC_VERSION', '1.8.1');
+define('IRISTICK_STATIC_VERSION', '1.8.8');
 define('IRISTICK_STATIC_DIR', get_template_directory());
 define('IRISTICK_STATIC_URI', get_template_directory_uri());
 define('IRISTICK_EUR_TO_VND_RATE', 35000);
@@ -82,12 +82,67 @@ function iristick_render_contact_widget() {
 }
 add_action('wp_footer', 'iristick_render_contact_widget', 20);
 
+function iristick_get_product_sku_by_path($path) {
+    $map = array(
+        'tools/iristick.g3' => 'IR-G3',
+        'tools/iristick.g2-pro' => 'IR-G2-PRO',
+        'tools/iristick.h1' => 'IR-H1',
+        'tools/iristick.h3' => 'IR-H3',
+    );
+    $normalized = strtolower(trim((string) $path, '/'));
+    return isset($map[$normalized]) ? $map[$normalized] : '';
+}
+
+function iristick_get_product_permalink_by_sku($sku, $fallback_path = '') {
+    if (function_exists('wc_get_product_id_by_sku')) {
+        $product_id = wc_get_product_id_by_sku($sku);
+        if ($product_id) {
+            $link = get_permalink($product_id);
+            if ($link) {
+                return $link;
+            }
+        }
+    }
+    return $fallback_path !== '' ? home_url($fallback_path) : home_url('/');
+}
+
+add_action('template_redirect', function () {
+    if (function_exists('is_shop') && (is_shop() || is_product_taxonomy())) {
+        wp_safe_redirect(home_url('/pricing/'), 301);
+        exit;
+    }
+    
+    // If a legacy static hardware route is requested directly, redirect to the dynamic WooCommerce product URL
+    $path = iristick_static_request_path();
+    if ($path) {
+        $sku = iristick_get_product_sku_by_path($path);
+        if ($sku && function_exists('wc_get_product_id_by_sku')) {
+            $product_id = wc_get_product_id_by_sku($sku);
+            if ($product_id) {
+                $permalink = get_permalink($product_id);
+                if ($permalink) {
+                    wp_safe_redirect($permalink, 301);
+                    exit;
+                }
+            }
+        }
+    }
+});
+
 function iristick_site_header_html() {
     $logo = IRISTICK_STATIC_URI . '/assets/images/iristick-logo.webp';
     $home = esc_url(home_url('/'));
     $demo = esc_url(home_url('/book-demo/'));
     $pricing = esc_url(home_url('/pricing/'));
     $trial = esc_url(home_url('/trial-program/'));
+
+    $g3_url = esc_url(iristick_get_product_permalink_by_sku('IR-G3', '/tools/Iristick.G3/'));
+    $g2_url = esc_url(iristick_get_product_permalink_by_sku('IR-G2-PRO', '/tools/Iristick.G2-PRO/'));
+    $h1_url = esc_url(iristick_get_product_permalink_by_sku('IR-H1', '/tools/Iristick.H1/'));
+    $h3_url = esc_url(iristick_get_product_permalink_by_sku('IR-H3', '/tools/Iristick.H3/'));
+    $collector_url = esc_url(home_url('/products/Iristick.Collector/'));
+    $teams_url = esc_url(home_url('/products/Iristick.Teams/'));
+    $assist_url = esc_url(home_url('/products/Iristick.Assist/'));
 
     return '<div class="navigation-wrapper svelte-1wxfnil">'
         . '<nav class="laptop svelte-1wxfnil">'
@@ -106,16 +161,16 @@ function iristick_site_header_html() {
         . '<div class="dropdown-content svelte-1wxfnil">'
         . '<div class="dropdown-cat svelte-1wxfnil">'
         . '<h4><span class="material-symbols-outlined svelte-1wxfnil">robot</span>Sản phẩm</h4>'
-        . '<a href="' . esc_url(home_url('/tools/Iristick.G3/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G3<span class="beta svelte-1wxfnil">MỚI</span></div><span>Kính thông minh thế hệ mới đa năng.</span></div></a>'
-        . '<a href="' . esc_url(home_url('/tools/Iristick.G2-PRO/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G2 PRO</div><span>Kính thông minh công nghiệp bền bỉ.</span></div></a>'
-        . '<a href="' . esc_url(home_url('/tools/Iristick.H1/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H1</div><span>Kính thông minh gắn mũ bảo hộ.</span></div></a>'
-        . '<a href="' . esc_url(home_url('/tools/Iristick.H3/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H3<span class="comingsoon svelte-1wxfnil">Sắp ra mắt</span></div><span>Thế hệ kính thông minh hạng nặng tiếp theo.</span></div></a>'
+        . '<a href="' . $g3_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G3<span class="beta svelte-1wxfnil">MỚI</span></div><span>Kính thông minh thế hệ mới đa năng.</span></div></a>'
+        . '<a href="' . $g2_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G2 PRO</div><span>Kính thông minh công nghiệp bền bỉ.</span></div></a>'
+        . '<a href="' . $h1_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H1</div><span>Kính thông minh gắn mũ bảo hộ.</span></div></a>'
+        . '<a href="' . $h3_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H3<span class="comingsoon svelte-1wxfnil">Sắp ra mắt</span></div><span>Thế hệ kính thông minh hạng nặng tiếp theo.</span></div></a>'
         . '</div>'
         . '<div class="dropdown-cat svelte-1wxfnil">'
         . '<h4><span class="material-symbols-outlined svelte-1wxfnil">devices</span>Công cụ</h4>'
-        . '<a href="' . esc_url(home_url('/products/Iristick.Collector/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Collector</div><span>Thu thập dữ liệu tốc độ cao, khối lượng lớn.</span></div></a>'
-        . '<a href="' . esc_url(home_url('/products/Iristick.Teams/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Teams</div><span>Gọi video call qua Microsoft Teams.</span></div></a>'
-        . '<a href="' . esc_url(home_url('/products/Iristick.Assist/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Assist</div><span>Gọi video nhanh, hỗ trợ từ xa tức thì.</span></div></a>'
+        . '<a href="' . $collector_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Collector</div><span>Thu thập dữ liệu tốc độ cao, khối lượng lớn.</span></div></a>'
+        . '<a href="' . $teams_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Teams</div><span>Gọi video call qua Microsoft Teams.</span></div></a>'
+        . '<a href="' . $assist_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Assist</div><span>Gọi video nhanh, hỗ trợ từ xa tức thì.</span></div></a>'
         . '</div>'
         . '<div class="dropdown-cat svelte-1wxfnil">'
         . '<h4><span class="material-symbols-outlined svelte-1wxfnil">code</span>Nhà phát triển</h4>'
@@ -165,18 +220,18 @@ function iristick_site_header_html() {
         . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
         . '<span class="topic-title svelte-1wxfnil">Sản phẩm</span>'
         . '<div class="topic-content svelte-1wxfnil">'
-        . '<a href="' . esc_url(home_url('/tools/Iristick.G3/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G3<span class="beta svelte-1wxfnil">MỚI</span></div><span>Kính thông minh thế hệ mới</span></div></a>'
-        . '<a href="' . esc_url(home_url('/tools/Iristick.G2-PRO/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G2 PRO</div><span>Kính thông minh công nghiệp bền bỉ</span></div></a>'
-        . '<a href="' . esc_url(home_url('/tools/Iristick.H1/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H1</div><span>Kính gắn mũ bảo hộ</span></div></a>'
-        . '<a href="' . esc_url(home_url('/tools/Iristick.H3/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H3<span class="comingsoon svelte-1wxfnil">Sắp ra mắt</span></div><span>Kính hạng nặng thế hệ mới</span></div></a>'
+        . '<a href="' . $g3_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G3<span class="beta svelte-1wxfnil">MỚI</span></div><span>Kính thông minh thế hệ mới</span></div></a>'
+        . '<a href="' . $g2_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.G2 PRO</div><span>Kính thông minh công nghiệp bền bỉ</span></div></a>'
+        . '<a href="' . $h1_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H1</div><span>Kính gắn mũ bảo hộ</span></div></a>'
+        . '<a href="' . $h3_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.H3<span class="comingsoon svelte-1wxfnil">Sắp ra mắt</span></div><span>Kính hạng nặng thế hệ mới</span></div></a>'
         . '</div>'
         . '</div>'
         . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
         . '<span class="topic-title svelte-1wxfnil">Công cụ</span>'
         . '<div class="topic-content svelte-1wxfnil">'
-        . '<a href="' . esc_url(home_url('/products/Iristick.Collector/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Collector</div><span>Thu thập dữ liệu tốc độ cao</span></div></a>'
-        . '<a href="' . esc_url(home_url('/products/Iristick.Teams/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Teams</div><span>Video call qua Microsoft Teams</span></div></a>'
-        . '<a href="' . esc_url(home_url('/products/Iristick.Assist/')) . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Assist</div><span>Hỗ trợ chuyên gia tức thì</span></div></a>'
+        . '<a href="' . $collector_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Collector</div><span>Thu thập dữ liệu tốc độ cao</span></div></a>'
+        . '<a href="' . $teams_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Teams</div><span>Video call qua Microsoft Teams</span></div></a>'
+        . '<a href="' . $assist_url . '"><div class="dropdown-topic svelte-1wxfnil"><div>Iristick.Assist</div><span>Hỗ trợ chuyên gia tức thì</span></div></a>'
         . '</div>'
         . '</div>'
         . '<div class="nav-cat-subnav-topic svelte-1wxfnil">'
@@ -271,7 +326,27 @@ function iristick_custom_favicon() {
 add_action('wp_head', 'iristick_custom_favicon', PHP_INT_MAX);
 
 function iristick_static_assets() {
+    // Fonts & Material Symbols Icons with 100% Vietnamese support
+    wp_enqueue_style(
+        'iristick-google-fonts',
+        'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&display=swap',
+        array(),
+        null
+    );
+    wp_enqueue_style(
+        'iristick-material-symbols',
+        'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block',
+        array(),
+        null
+    );
+
+    // Core stylesheets
+    wp_enqueue_style('iristick-base', IRISTICK_STATIC_URI . '/static/base.css', array(), IRISTICK_STATIC_VERSION);
+    wp_enqueue_style('iristick-app-button', IRISTICK_STATIC_URI . '/static/_app/immutable/assets/button.Cnk_Ow-q.css', array(), IRISTICK_STATIC_VERSION);
+    wp_enqueue_style('iristick-app-core', IRISTICK_STATIC_URI . '/static/_app/immutable/assets/0.D44dWdpH.css', array(), IRISTICK_STATIC_VERSION);
     wp_enqueue_style('iristick-static-admin-fixes', get_stylesheet_uri(), array(), IRISTICK_STATIC_VERSION);
+    wp_enqueue_style('iristick-responsive', IRISTICK_STATIC_URI . '/assets/css/responsive.css', array('iristick-app-core'), IRISTICK_STATIC_VERSION);
+
     if (in_array(iristick_static_request_path(), array('book-demo', 'trial-order'), true)) {
         wp_enqueue_style(
             'iristick-demo-form',
@@ -284,19 +359,19 @@ function iristick_static_assets() {
         wp_enqueue_style(
             'iristick-woocommerce-product',
             IRISTICK_STATIC_URI . '/assets/css/woocommerce-product.css',
-            array(),
+            array('iristick-google-fonts', 'iristick-material-symbols', 'iristick-app-core', 'iristick-responsive'),
             IRISTICK_STATIC_VERSION
         );
     }
-    if (iristick_static_requested_file()) {
-        wp_enqueue_script(
-            'iristick-static-navigation',
-            IRISTICK_STATIC_URI . '/assets/js/static-navigation.js',
-            array(),
-            IRISTICK_STATIC_VERSION,
-            true
-        );
-    }
+
+    // Always enqueue navigation script for header dropdowns & mobile menu
+    wp_enqueue_script(
+        'iristick-static-navigation',
+        IRISTICK_STATIC_URI . '/assets/js/static-navigation.js',
+        array(),
+        IRISTICK_STATIC_VERSION,
+        true
+    );
 }
 add_action('wp_enqueue_scripts', 'iristick_static_assets');
 
@@ -2217,10 +2292,20 @@ function iristick_static_rewrite_url($url, $file) {
 
     $page_path = preg_replace('#(?:/)?index\.html?$#i', '', $relative);
     $page_path = preg_replace('/\.html?$/i', '', $page_path);
+    $clean_page_path = trim($page_path, '/');
+
+    // Route internal product links directly to their dynamic WooCommerce permalinks
+    $sku = iristick_get_product_sku_by_path($clean_page_path);
+    if ($sku) {
+        $product_url = iristick_get_product_permalink_by_sku($sku);
+        if ($product_url) {
+            return $product_url . $query . $fragment;
+        }
+    }
 
     // Any HTML page route must link directly to its clean WordPress URL
     if (preg_match('/\.html?$/i', $relative) || preg_match('#(?:/)?index\.html?$#i', $relative)) {
-        return home_url('/' . trim($page_path, '/') . '/') . $query . $fragment;
+        return home_url('/' . $clean_page_path . '/') . $query . $fragment;
     }
 
     $disk_relative = rawurldecode($relative);
@@ -2229,7 +2314,7 @@ function iristick_static_rewrite_url($url, $file) {
         return IRISTICK_STATIC_URI . '/static/' . $relative . $query . $fragment;
     }
 
-    return home_url('/' . trim($page_path, '/') . '/') . $query . $fragment;
+    return home_url('/' . $clean_page_path . '/') . $query . $fragment;
 }
 
 function iristick_static_short_page_title($path, $original = '') {

@@ -1,10 +1,483 @@
-.iristick-product-page{margin:0;background:#f7f7f7;color:#19191c;font-family:"DM Sans",Arial,sans-serif}.iristick-store-header{position:relative;z-index:20;display:flex;align-items:center;gap:42px;min-height:92px;padding:0 34px;background:#fff;border-radius:0 0 28px 28px;box-sizing:border-box}.iristick-store-logo img{display:block;width:194px;height:auto}.iristick-store-header nav{display:flex;align-items:center;justify-content:center;gap:38px;flex:1}.iristick-store-header nav>a,.iristick-store-header summary{color:#19191c;text-decoration:none;font-size:17px;cursor:pointer;list-style:none}.iristick-store-header details{position:relative}.iristick-store-header summary::-webkit-details-marker{display:none}.iristick-store-products{position:absolute;top:34px;left:-25px;width:330px;padding:14px;background:#fff;border:1px solid #e1e1e1;border-radius:18px;box-shadow:0 18px 50px #0002}.iristick-store-products a{display:flex;flex-direction:column;gap:2px;padding:11px 12px;color:#19191c;text-decoration:none;border-radius:10px}.iristick-store-products a:hover{background:#f1f2ff}.iristick-store-products small{color:#696970}.iristick-store-cart{position:relative;color:#19191c;text-decoration:none}.iristick-store-cart b,.iristick-cart-count{position:absolute;top:-9px;right:-11px;display:grid;place-items:center;min-width:19px;height:19px;padding:0 4px;border-radius:99px;background:#ff6c59;color:#fff;font:700 11px/1 Arial;box-sizing:border-box}.shoplink{position:relative}.iristick-product-shell{max-width:1240px;margin:auto;padding:42px 28px 80px}.iristick-product-breadcrumb{margin-bottom:28px;color:#73737a;font-size:14px}.iristick-product-breadcrumb a{color:inherit}.iristick-product-hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);gap:54px;padding:46px;background:#fff;border:1px solid #e4e4e4;border-radius:28px}.iristick-product-media{display:grid;place-items:center;min-height:460px;background:#fafafa;border-radius:22px;overflow:hidden}.iristick-product-media img{max-width:100%;height:auto}.iristick-product-placeholder{display:flex;flex-direction:column;align-items:center;gap:8px;color:#898991}.iristick-product-placeholder span{font-size:72px;font-weight:800;color:#dedee2}.iristick-product-label{color:#6676ef;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.iristick-product-summary h1{margin:10px 0 18px;font-size:clamp(38px,5vw,68px);line-height:1}.iristick-product-lead{font-size:20px;line-height:1.55;color:#57575e}.iristick-product-price{margin:30px 0;font-size:30px;font-weight:800}.iristick-product-summary form.cart{display:flex;gap:12px}.iristick-product-summary .quantity input{width:74px;padding:14px;border:1px solid #ccc;border-radius:99px}.iristick-product-summary .single_add_to_cart_button,.iristick-contact-product{display:inline-flex;padding:15px 28px;border:0;border-radius:99px;background:#19191c;color:#fff;text-decoration:none;font-weight:700;cursor:pointer}.iristick-product-details{margin-top:28px;padding:38px;background:#fff;border:1px solid #e4e4e4;border-radius:28px}.iristick-product-details h2{margin-top:0;font-size:32px}.iristick-product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.iristick-product-grid article{display:flex;flex-direction:column;gap:8px;padding:20px;background:#f7f7f7;border-radius:16px}.iristick-product-grid span{color:#777}.iristick-product-description{margin-top:32px;padding-top:24px;border-top:1px solid #e5e5e5}.iristick-product-description h3{font-size:24px}@media(max-width:850px){.iristick-store-header{padding:16px 20px;gap:16px;flex-wrap:wrap}.iristick-store-logo img{width:150px}.iristick-store-header nav{order:3;flex-basis:100%;justify-content:flex-start;gap:18px;overflow:auto}.iristick-product-hero{grid-template-columns:1fr;padding:22px}.iristick-product-media{min-height:280px}.iristick-product-grid{grid-template-columns:1fr}}
+/* ==========================================================================
+   Modern Dynamic WooCommerce Product Page Styles - Iristick Việt Nam
+   ========================================================================== */
 
-/* Classic Iristick product frame. */
-.iristick-product-shell{max-width:980px;padding-top:38px}.iristick-classic-product{padding:28px 38px 46px;background:#fff}.iristick-classic-product .iristick-product-media{width:100%;min-height:470px;border-radius:16px;background:linear-gradient(135deg,#e5e5e5,#fafafa)}.iristick-classic-product .iristick-product-media img{display:block;width:100%;height:auto;max-height:620px;object-fit:contain}.iristick-classic-summary{padding:28px 38px 34px}.iristick-product-title-row{display:flex;align-items:center;gap:12px}.iristick-product-title-row h1{margin:0;font-size:42px;font-weight:500}.iristick-product-title-row>span{padding:3px 7px;border:1px solid #19191c;border-radius:99px;font-size:9px}.iristick-classic-summary .iristick-product-lead{max-width:760px;margin-top:24px;font-size:15px;line-height:1.55;color:#19191c}.iristick-classic-summary .iristick-product-price{margin:50px 0 14px;font-size:25px;font-weight:500}.iristick-classic-summary form.cart{display:flex;align-items:center;gap:10px}.iristick-classic-summary .quantity input{width:62px;padding:10px;border:1px solid #bbb;border-radius:4px}.iristick-classic-summary .single_add_to_cart_button,.iristick-classic-summary .iristick-contact-product{padding:10px 20px;border-radius:4px;background:#19191c;font-size:12px}.iristick-product-accordions{padding:0 38px}.iristick-product-accordions details{border-bottom:1px solid #1f1f1f}.iristick-product-accordions details:first-child{border-top:1px solid #1f1f1f}.iristick-product-accordions summary{display:flex;justify-content:space-between;align-items:center;padding:19px 0;list-style:none;cursor:pointer;font-size:14px}.iristick-product-accordions summary::-webkit-details-marker{display:none}.iristick-product-accordions summary:after{content:"+"}.iristick-product-accordions details[open] summary:after{content:"−"}.iristick-accordion-content{padding:3px 0 28px;font-size:13px;line-height:1.65}.iristick-spec-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:25px 50px}.iristick-spec-grid strong{font-size:13px}.iristick-spec-grid p{margin:7px 0 0;color:#555}@media(max-width:700px){.iristick-classic-product{padding:14px}.iristick-classic-product .iristick-product-media{min-height:280px}.iristick-classic-summary,.iristick-product-accordions{padding-left:10px;padding-right:10px}.iristick-product-title-row h1{font-size:32px}.iristick-spec-grid{grid-template-columns:1fr}}
-.iristick-classic-product .iristick-product-media video{display:block;width:100%;max-height:620px;object-fit:cover}
-.iristick-store-cart{display:none!important}
-.iristick-feature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:25px 50px}.iristick-feature-grid strong{font-size:13px}.iristick-feature-grid p{margin:7px 0 0;color:#555}@media(max-width:700px){.iristick-feature-grid{grid-template-columns:1fr}}
+.iristick-product-page {
+  margin: 0;
+  padding: 0;
+  background-color: #f7f6fb;
+  color: #1a1721;
+  font-family: 'Plus Jakarta Sans', 'Manrope', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 
-/* Direct purchase, Zalo consultation and callback request. */
-.iristick-purchase-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}.iristick-purchase-actions form.cart{display:block!important;margin:0}.iristick-purchase-actions form.cart .quantity{display:none!important}.iristick-zalo-button,.iristick-purchase-actions .single_add_to_cart_button{display:flex!important;align-items:center;justify-content:center;width:100%;min-height:48px;padding:12px 18px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:750;line-height:1.2;box-sizing:border-box;transition:transform .2s ease,box-shadow .2s ease,background .2s ease}.iristick-zalo-button{border:1px solid #7668ee;background:#fff;color:#5548d9}.iristick-zalo-button:before{content:"Z";display:grid;place-items:center;width:22px;height:22px;margin-right:8px;border-radius:50%;background:#7668ee;color:#fff;font-size:12px;font-weight:800}.iristick-zalo-button:hover{transform:translateY(-1px);background:#f5f3ff;box-shadow:0 8px 20px #7668ee22;color:#5548d9}.iristick-purchase-actions .single_add_to_cart_button{border:1px solid #19191c!important;background:#19191c!important;color:#fff!important;box-shadow:0 8px 18px #19191c1c}.iristick-purchase-actions .single_add_to_cart_button:hover{transform:translateY(-1px);background:#7668ee!important;border-color:#7668ee!important;box-shadow:0 10px 24px #7668ee35}.iristick-phone-consultation{position:relative;margin-top:18px;padding:22px;border:1px solid #dedaf5;border-radius:20px;background:linear-gradient(145deg,#f7f6ff 0%,#ece9fb 100%);color:#19191c;box-shadow:0 12px 34px #37305e0d;overflow:hidden}.iristick-phone-consultation:after{content:"";position:absolute;right:-38px;top:-55px;width:130px;height:130px;border-radius:50%;background:#7668ee12;pointer-events:none}.iristick-phone-consultation>strong{position:relative;z-index:1;display:flex;align-items:center;margin:0 0 16px;font-size:14px;line-height:1.45}.iristick-phone-consultation>strong span{display:grid;flex:0 0 32px;place-items:center;width:32px;height:32px;margin-right:10px;border-radius:50%;background:#7668ee;color:#fff;font-size:15px}.iristick-phone-row{position:relative;z-index:1;display:flex;gap:9px;padding:5px;background:#fff;border:1px solid #e1def0;border-radius:999px;box-shadow:0 6px 20px #29224e0a}.iristick-phone-row input{min-width:0;flex:1;height:42px;padding:0 13px;border:0;border-radius:999px;background:transparent;color:#19191c;font:inherit;box-sizing:border-box}.iristick-phone-row input::placeholder{color:#9995a5}.iristick-phone-row input:focus{outline:0}.iristick-phone-row:focus-within{border-color:#7668ee;box-shadow:0 0 0 3px #7668ee18}.iristick-phone-row button{min-width:100px;padding:0 18px;border:0;border-radius:999px;background:#7668ee;color:#fff;font-size:13px;font-weight:800;text-transform:uppercase;cursor:pointer;transition:background .2s ease,transform .2s ease}.iristick-phone-row button:hover{transform:translateY(-1px);background:#19191c}.iristick-phone-status{position:relative;z-index:1;margin:12px 4px 0;font-size:13px;font-weight:600}@media(max-width:560px){.iristick-purchase-actions{grid-template-columns:1fr}.iristick-phone-consultation{padding:18px}.iristick-phone-row{align-items:stretch;flex-direction:column;padding:7px;border-radius:16px}.iristick-phone-row input,.iristick-phone-row button{height:44px}.iristick-phone-row button{width:100%}}
+.iristick-product-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 120px 24px 80px;
+  box-sizing: border-box;
+}
+
+.iristick-classic-product {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 40px;
+  background: #ffffff;
+  border: 1px solid #e7e5f0;
+  border-radius: 28px;
+  padding: 40px;
+  box-shadow: 0 16px 45px rgba(25, 23, 38, 0.05);
+  box-sizing: border-box;
+}
+
+/* Left Column: Media */
+.iristick-product-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  background: linear-gradient(135deg, #fbfaff 0%, #edeafc 100%);
+  border-radius: 22px;
+  border: 1px solid #eeebf8;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.iristick-product-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 540px;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+.iristick-product-media img {
+  display: block;
+  max-width: 90%;
+  max-height: 480px;
+  height: auto;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.iristick-product-media:hover img {
+  transform: scale(1.03);
+}
+
+.iristick-product-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #9d99ab;
+}
+
+.iristick-product-placeholder span {
+  font-size: 64px;
+  font-weight: 800;
+  color: #d8d5e5;
+}
+
+/* Right Column: Summary */
+.iristick-classic-summary {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.iristick-product-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.iristick-product-title-row h1 {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 750;
+  line-height: 1.15;
+  color: #17151e;
+  letter-spacing: -0.02em;
+}
+
+.iristick-product-title-row > span {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: #ece9ff;
+  color: #5545e3;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.iristick-product-lead {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #545063;
+  margin-bottom: 24px;
+}
+
+.iristick-product-price {
+  font-size: 32px;
+  font-weight: 800;
+  color: #17151e;
+  margin-bottom: 28px;
+}
+
+.iristick-product-price del {
+  color: #9d99ab;
+  font-size: 20px;
+  font-weight: 500;
+  margin-right: 12px;
+}
+
+.iristick-product-price ins {
+  text-decoration: none;
+  color: #2e7d32;
+}
+
+/* Purchase Actions */
+.iristick-purchase-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.iristick-purchase-actions form.cart {
+  display: block !important;
+  margin: 0;
+}
+
+.iristick-purchase-actions form.cart .quantity {
+  display: none !important;
+}
+
+.iristick-zalo-button,
+.iristick-purchase-actions .single_add_to_cart_button {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 20px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  cursor: pointer;
+}
+
+.iristick-zalo-button {
+  border: 1.5px solid #6658e8;
+  background: #ffffff;
+  color: #5545e3;
+  box-shadow: 0 4px 14px rgba(102, 88, 232, 0.08);
+}
+
+.iristick-zalo-button:hover {
+  transform: translateY(-2px);
+  background: #f4f2ff;
+  box-shadow: 0 8px 20px rgba(102, 88, 232, 0.18);
+  color: #4333d6;
+}
+
+.iristick-purchase-actions .single_add_to_cart_button {
+  border: 1.5px solid #17151e !important;
+  background: #17151e !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(23, 21, 30, 0.15);
+}
+
+.iristick-purchase-actions .single_add_to_cart_button:hover {
+  transform: translateY(-2px);
+  background: #6658e8 !important;
+  border-color: #6658e8 !important;
+  box-shadow: 0 8px 24px rgba(102, 88, 232, 0.35);
+}
+
+.iristick-contact-product {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 24px;
+  border-radius: 14px;
+  background: #17151e;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 26px;
+  box-sizing: border-box;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.iristick-contact-product:hover {
+  background: #6658e8;
+  transform: translateY(-2px);
+}
+
+/* Phone Consultation Widget */
+.iristick-phone-consultation {
+  position: relative;
+  padding: 22px 24px;
+  border: 1px solid #dedaf5;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #fbfaff 0%, #f0edfc 100%);
+  color: #17151e;
+  box-shadow: 0 10px 28px rgba(55, 48, 94, 0.05);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.iristick-phone-consultation > strong {
+  display: flex;
+  align-items: center;
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 700;
+  color: #272338;
+}
+
+.iristick-phone-consultation > strong span {
+  display: grid;
+  flex: 0 0 28px;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: #6658e8;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.iristick-phone-row {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: #ffffff;
+  border: 1px solid #dcd8f2;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(41, 34, 78, 0.06);
+}
+
+.iristick-phone-row input {
+  min-width: 0;
+  flex: 1;
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #17151e;
+  font-size: 14px;
+  outline: none;
+}
+
+.iristick-phone-row input::placeholder {
+  color: #9d99ab;
+}
+
+.iristick-phone-row button {
+  min-width: 95px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #6658e8;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.iristick-phone-row button:hover {
+  background: #17151e;
+  transform: translateY(-1px);
+}
+
+.iristick-phone-status {
+  margin: 12px 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+/* Accordions Section */
+.iristick-product-accordions {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  border-top: 1px solid #eeeaf6;
+  padding-top: 20px;
+}
+
+.iristick-product-accordions details {
+  border-bottom: 1px solid #eeebf8;
+  padding: 8px 0;
+}
+
+.iristick-product-accordions summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 6px;
+  list-style: none;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', 'Manrope', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 18px;
+  font-weight: 700;
+  color: #17151e;
+  transition: color 0.15s ease;
+}
+
+.iristick-product-accordions summary:hover {
+  color: #6658e8;
+}
+
+.iristick-product-accordions summary::-webkit-details-marker {
+  display: none;
+}
+
+.iristick-product-accordions summary:after {
+  content: "+";
+  font-size: 24px;
+  font-weight: 400;
+  color: #7b768e;
+}
+
+.iristick-product-accordions details[open] summary:after {
+  content: "−";
+  color: #6658e8;
+}
+
+.iristick-accordion-content {
+  padding: 12px 6px 30px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #4a4658;
+}
+
+.iristick-feature-grid,
+.iristick-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 40px;
+}
+
+.iristick-feature-grid > div,
+.iristick-spec-grid > div {
+  padding: 16px 20px;
+  background: #fbfaff;
+  border: 1px solid #f0edf9;
+  border-radius: 14px;
+}
+
+.iristick-feature-grid strong,
+.iristick-spec-grid strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 750;
+  color: #1d1a29;
+  margin-bottom: 6px;
+}
+
+.iristick-feature-grid p,
+.iristick-spec-grid p {
+  margin: 0;
+  font-size: 14px;
+  color: #5d596e;
+}
+
+.iristick-accordion-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.iristick-accordion-content ul li a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: #fbfaff;
+  border: 1px solid #eeebf8;
+  border-radius: 12px;
+  color: #5545e3;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.iristick-accordion-content ul li a:hover {
+  background: #f0edfc;
+  transform: translateX(4px);
+}
+
+.iristick-accordion-content h4 {
+  margin: 16px 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #17151e;
+}
+
+.iristick-accordion-content h4:first-child {
+  margin-top: 0;
+}
+
+/* Responsive Rules */
+@media (max-width: 900px) {
+  .iristick-product-shell {
+    padding: 100px 16px 60px;
+  }
+  .iristick-classic-product {
+    grid-template-columns: 1fr;
+    padding: 24px 18px;
+    gap: 28px;
+    border-radius: 22px;
+  }
+  .iristick-product-media {
+    min-height: 300px;
+  }
+  .iristick-feature-grid,
+  .iristick-spec-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  .iristick-purchase-actions {
+    grid-template-columns: 1fr;
+  }
+  .iristick-phone-row {
+    flex-direction: column;
+    padding: 8px;
+    border-radius: 16px;
+  }
+  .iristick-phone-row input,
+  .iristick-phone-row button {
+    height: 46px;
+    width: 100%;
+  }
+}

@@ -21,11 +21,9 @@
 	--color-image-background: rgb(192, 192, 192);
 
 	--vt-f-font-family-heading:
-		'DM Sans', 'Manrope', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-		Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+		'Plus Jakarta Sans', 'Manrope', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 	--vt-f-font-family-text:
-		'Manrope', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-		Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+		'Plus Jakarta Sans', 'Manrope', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
 	--vt-base-screen-width: 1280px;
 	--vt-base-1-screen-width: 980px;
