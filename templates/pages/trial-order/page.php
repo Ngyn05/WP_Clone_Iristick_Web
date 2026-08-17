@@ -9,6 +9,54 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="../css2-1?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000&amp;display=swap">
+    <link rel="stylesheet" href="{{IRISTICK_THEME_URI}}/assets/css/demo-form.css">
+    <link rel="stylesheet" href="{{IRISTICK_THEME_URI}}/assets/css/responsive.css">
+    <style>
+        .trial-shop { min-height: 100vh; background: #f7f7f8; color: #1e1e21; font-family: "DM Sans", Arial, sans-serif; overflow-x: hidden; }
+        .trial-shop-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1200px; margin: auto; padding: 1.5rem 2rem; box-sizing: border-box; }
+        .trial-shop-header img { display: block; width: 180px; max-width: 100%; height: auto; object-fit: contain; }
+        .trial-shop-header > a:last-child { color: #1e1e21; font-weight: 650; text-decoration: none; }
+        .trial-product { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 1200px; margin: auto; padding: 2rem 2rem 5rem; box-sizing: border-box; align-items: start; }
+        .trial-product-media { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+        #trial-main-image { display: block; width: 100%; height: auto; max-height: 420px; aspect-ratio: 4 / 3; object-fit: contain; border-radius: 20px; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.04); padding: 12px; box-sizing: border-box; }
+        .trial-breadcrumb { margin: 0 0 1.25rem; color: #77777c; font-size: .85rem; line-height: 1.4; word-break: break-word; }
+        .trial-thumbnails { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 8px !important; width: 100% !important; max-width: 100% !important; margin-top: 12px !important; box-sizing: border-box !important; }
+        .trial-thumbnails button { display: flex !important; align-items: center !important; justify-content: center !important; width: 100% !important; min-width: 0 !important; max-width: 100% !important; aspect-ratio: 1 / 1 !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; border: 2px solid #e5e7eb !important; border-radius: 10px !important; background: #fff !important; cursor: pointer !important; box-sizing: border-box !important; }
+        .trial-thumbnails button.active { border-color: #ff6c5c !important; }
+        .trial-thumbnails img { display: block !important; width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        .trial-details { margin-top: 2.5rem; color: #333338; font-size: .95rem; line-height: 1.65; }
+        .trial-product-info { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+        .trial-eyebrow { margin: 0 0 .5rem; color: #ff6c5c; font-weight: 750; font-size: .85rem; text-transform: uppercase; }
+        .trial-product-info h1 { margin: 0; font-size: clamp(1.6rem, 3.5vw, 2.3rem); line-height: 1.15; word-break: break-word; }
+        .trial-price { margin: 1.25rem 0; font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 750; }
+        .trial-order-form { display: grid; gap: 1.3rem; margin-top: 1.5rem; width: 100%; box-sizing: border-box; }
+        .trial-choice { display: flex; gap: .85rem; align-items: flex-start; padding: .85rem 1rem; border: 1px solid #d9d9df; border-radius: 12px; background: #fff; cursor: pointer; box-sizing: border-box; }
+        .trial-choice:has(input:checked) { border-color: #ff6c5c; box-shadow: 0 0 0 2px rgba(255,108,92,.12); background: #fffdfd; }
+        .trial-choice input[type="radio"] { margin-top: 3px; }
+        .trial-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%; }
+        .trial-order-form > label, .trial-row label { display: grid; gap: .45rem; font-weight: 650; font-size: .9rem; }
+        .trial-order-form input:not([type="radio"]):not([type="checkbox"]), .trial-order-form textarea { width: 100%; min-height: 44px; padding: .75rem .9rem; border: 1px solid #c9cad1; border-radius: 10px; background: #fff; font: inherit; box-sizing: border-box; }
+        .trial-order-submit { width: 100%; min-height: 52px; padding: 0 2rem; border: 0; border-radius: 14px; background: #ff6c5c; color: #fff; font: inherit; font-size: 1.05rem; font-weight: 750; cursor: pointer; }
+
+        @media (max-width: 900px) {
+            .trial-product { display: flex !important; flex-direction: column !important; padding: 1.25rem 14px 4rem !important; gap: 24px !important; }
+            .trial-product-media, .trial-product-info { width: 100% !important; max-width: 100% !important; }
+            #trial-main-image { max-height: 280px !important; aspect-ratio: 4 / 3 !important; border-radius: 14px !important; padding: 8px !important; }
+            .trial-thumbnails { gap: 6px !important; }
+            .trial-thumbnails button { border-radius: 8px !important; }
+            .trial-row { grid-template-columns: 1fr !important; gap: .85rem !important; }
+            .trial-order-submit { min-height: 48px !important; font-size: 1rem !important; }
+            .trial-shop-header { padding: 1rem 14px !important; }
+            .trial-shop-header img { width: 130px !important; }
+        }
+
+        @media (max-width: 400px) {
+            .trial-shop-header > a:last-child { display: none !important; }
+            .trial-product-info h1 { font-size: 1.4rem !important; }
+            .trial-price { font-size: 1.4rem !important; }
+            .trial-thumbnails { gap: 4px !important; }
+        }
+    </style>
 </head>
 <body style="margin:0">
 <main class="trial-shop">
