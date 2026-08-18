@@ -244,11 +244,6 @@ function iristick_get_dynamic_hardware_products() {
             $url = $p->get_permalink();
             $desc = wp_strip_all_tags($p->get_short_description() ?: 'Kính thông minh công nghiệp chính hãng.');
             $badge = '';
-            if ($sku === 'IR-G3' || $p->is_featured()) {
-                $badge = 'MỚI';
-            } elseif ($sku === 'IR-H3' || !$p->is_in_stock()) {
-                $badge = 'Sắp ra mắt';
-            }
             $list[] = array(
                 'sku' => $sku,
                 'name' => $name,
@@ -265,7 +260,7 @@ function iristick_get_dynamic_hardware_products() {
                 'name' => 'Iristick.G3',
                 'url' => home_url('/product/iristick-g3/'),
                 'desc' => 'Kính thông minh thế hệ mới đa năng.',
-                'badge' => 'MỚI',
+                'badge' => '',
             ),
             array(
                 'sku' => 'IR-G2-PRO',
@@ -286,7 +281,7 @@ function iristick_get_dynamic_hardware_products() {
                 'name' => 'Iristick.H3',
                 'url' => home_url('/product/iristick-h3/'),
                 'desc' => 'Thế hệ kính thông minh hạng nặng tiếp theo.',
-                'badge' => 'Sắp ra mắt',
+                'badge' => '',
             ),
         );
     }
